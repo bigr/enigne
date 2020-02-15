@@ -1,8 +1,78 @@
+from __future__ import annotations
+
 from typing import NewType, Optional, Dict, Any
 
 Piece = NewType('Piece', int)
 PieceChar = NewType('PieceChar', str)
 Color = NewType('Color', int)
+File = NewType('File', int)
+Rank = NewType('Rank', int)
+SquareStr = NewType('SquareStr', str)
+
+
+class Move:
+    _start: Square
+    _end: Square
+    _promote: Piece
+
+    @property
+    def start(self) -> Square:
+        return self._start
+
+    @property
+    def end(self) -> Square:
+        return self._end
+
+    @property
+    def promote(self) -> Optional[Piece]:
+        return self._promote
+
+    def __init__(self, start: Square, end: Square, promote: Optional[Piece] = None):
+        self._start = start
+        self._end = end
+        self._promote = promote
+
+    def __eq__(self, other):
+        return self.start == other.start and self.end == other.end and self.promote == other.promote
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({repr(self.start)}, {repr(self.end)}, {repr(self.promote)})'
+
+    def __str__(self):
+        promote = Board.piece_to_char(self.promote, Board.BLACK) if self.promote is not None else ''
+        return f"{self.start}{self.end}{promote}"
+
+
+class Square:
+    _file: File
+    _rank: Rank
+
+    def __init__(self, _file: File, _rank: Rank):
+        self._file, self._rank = _file, _rank
+
+    @property
+    def file(self) -> File:
+        return self._file
+
+    @property
+    def rank(self) -> Rank:
+        return self._rank
+
+    @classmethod
+    def from_str(cls, square_str: SquareStr) -> Square:
+        file_str, rank_str = square_str
+        file = File(ord(file_str) - ord('a'))
+        rank = Rank(int(rank_str) - 1)
+        return cls(file, rank)
+
+    def __eq__(self, other):
+        return self.file == other.file and self.rank == other.rank
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.file}, {self.rank})'
+
+    def __str__(self):
+        return f"{chr(ord('a') + int(self.file))}{int(self.rank) + 1}"
 
 
 class Board:
