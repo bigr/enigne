@@ -8,39 +8,7 @@ Color = NewType('Color', int)
 File = NewType('File', int)
 Rank = NewType('Rank', int)
 SquareStr = NewType('SquareStr', str)
-
-
-class Move:
-    _start: Square
-    _end: Square
-    _promote: Piece
-
-    @property
-    def start(self) -> Square:
-        return self._start
-
-    @property
-    def end(self) -> Square:
-        return self._end
-
-    @property
-    def promote(self) -> Optional[Piece]:
-        return self._promote
-
-    def __init__(self, start: Square, end: Square, promote: Optional[Piece] = None):
-        self._start = start
-        self._end = end
-        self._promote = promote
-
-    def __eq__(self, other):
-        return self.start == other.start and self.end == other.end and self.promote == other.promote
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({repr(self.start)}, {repr(self.end)}, {repr(self.promote)})'
-
-    def __str__(self):
-        promote = Board.piece_to_char(self.promote, Board.BLACK) if self.promote is not None else ''
-        return f"{self.start}{self.end}{promote}"
+MoveStr = NewType('MoveStr', str)
 
 
 class Square:
@@ -73,6 +41,44 @@ class Square:
 
     def __str__(self):
         return f"{chr(ord('a') + int(self.file))}{int(self.rank) + 1}"
+
+
+class Move:
+    _start: Square
+    _end: Square
+    _promote: Piece
+
+    @property
+    def start(self) -> Square:
+        return self._start
+
+    @property
+    def end(self) -> Square:
+        return self._end
+
+    @property
+    def promote(self) -> Optional[Piece]:
+        return self._promote
+
+    def __init__(self, start: Square, end: Square, promote: Optional[Piece] = None):
+        self._start = start
+        self._end = end
+        self._promote = promote
+
+    @classmethod
+    def from_str(cls, move_str: MoveStr) -> Move:
+        start, end, promote = SquareStr(move_str[:2]), SquareStr(move_str[2:4]), PieceChar(move_str[4:])
+        return cls(Square.from_str(start), Square.from_str(end), Board.char_to_piece(promote) if promote else None)
+
+    def __eq__(self, other):
+        return self.start == other.start and self.end == other.end and self.promote == other.promote
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({repr(self.start)}, {repr(self.end)}, {repr(self.promote)})'
+
+    def __str__(self):
+        promote = Board.piece_to_char(self.promote, Board.BLACK) if self.promote is not None else ''
+        return f"{self.start}{self.end}{promote}"
 
 
 class Board:
