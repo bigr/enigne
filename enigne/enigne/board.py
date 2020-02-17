@@ -3,12 +3,9 @@ from __future__ import annotations
 from typing import NewType, Optional, Dict, Any
 
 Piece = NewType('Piece', int)
-PieceChar = NewType('PieceChar', str)
 Color = NewType('Color', int)
 File = NewType('File', int)
 Rank = NewType('Rank', int)
-SquareStr = NewType('SquareStr', str)
-MoveStr = NewType('MoveStr', str)
 
 
 class Square:
@@ -27,7 +24,7 @@ class Square:
         return self._rank
 
     @classmethod
-    def from_str(cls, square_str: SquareStr) -> Square:
+    def from_str(cls, square_str: str) -> Square:
         file_str, rank_str = square_str
         file = File(ord(file_str) - ord('a'))
         rank = Rank(int(rank_str) - 1)
@@ -66,8 +63,8 @@ class Move:
         self._promote = promote
 
     @classmethod
-    def from_str(cls, move_str: MoveStr) -> Move:
-        start, end, promote = SquareStr(move_str[:2]), SquareStr(move_str[2:4]), PieceChar(move_str[4:])
+    def from_str(cls, move_str: str) -> Move:
+        start, end, promote = move_str[:2], move_str[2:4], move_str[4:]
         return cls(Square.from_str(start), Square.from_str(end), Board.char_to_piece(promote) if promote else None)
 
     def __eq__(self, other):
@@ -95,16 +92,16 @@ class Board:
     WHITE, BLACK = Color(0), Color(1)
 
     @classmethod
-    def char_to_piece(cls, piece_char: PieceChar) -> Piece:
+    def char_to_piece(cls, piece_char: str) -> Piece:
         return {
             'p': cls.PAWN, 'b': cls.BISHOP, 'n': cls.KNIGHT,
             'r': cls.ROOK, 'q': cls.QUEEN, 'k': cls.KING
         }[piece_char]
 
     @classmethod
-    def piece_to_char(cls, piece: Piece, color: Color) -> PieceChar:
+    def piece_to_char(cls, piece: Piece, color: Color) -> str:
         ret = ['p', 'b', 'n', 'r', 'q', 'k'][int(piece) - 1]
-        return PieceChar(ret.upper() if color == cls.WHITE else ret)
+        return ret.upper() if color == cls.WHITE else ret
 
     def load_fen(self, fen: str):
         self.clear()
