@@ -1,4 +1,4 @@
-from enigne.board import Board, Square, File, Rank, SquareStr, Move, MoveStr
+from enigne.board import Board, Square, File, Rank, Move
 
 
 def test_square_eq():
@@ -11,36 +11,36 @@ def test_square_str():
 
 
 def test_square_from_str():
-    assert str(Square.from_str(SquareStr('c6'))) == 'c6'
+    assert str(Square.from_str('c6')) == 'c6'
 
 
 def test_move_eq():
     assert \
-        Move(Square.from_str(SquareStr('a3')), Square.from_str(SquareStr('a4'))) == \
-        Move(Square.from_str(SquareStr('a3')), Square.from_str(SquareStr('a4')))
+        Move(Square.from_str('a3'), Square.from_str('a4')) == \
+        Move(Square.from_str('a3'), Square.from_str('a4'))
 
     assert \
-        Move(Square.from_str(SquareStr('e2')), Square.from_str(SquareStr('e4'))) != \
-        Move(Square.from_str(SquareStr('a3')), Square.from_str(SquareStr('a4')))
+        Move(Square.from_str('e2'), Square.from_str('e4')) != \
+        Move(Square.from_str('a3'), Square.from_str('a4'))
 
     assert \
-        Move(Square.from_str(SquareStr('b2')), Square.from_str(SquareStr('a1')), Board.QUEEN) == \
-        Move(Square.from_str(SquareStr('b2')), Square.from_str(SquareStr('a1')), Board.QUEEN)
+        Move(Square.from_str('b2'), Square.from_str('a1'), Board.QUEEN) == \
+        Move(Square.from_str('b2'), Square.from_str('a1'), Board.QUEEN)
 
     assert \
-        Move(Square.from_str(SquareStr('b2')), Square.from_str(SquareStr('a1')), Board.QUEEN) != \
-        Move(Square.from_str(SquareStr('b2')), Square.from_str(SquareStr('a1')), Board.ROOK)
+        Move(Square.from_str('b2'), Square.from_str('a1'), Board.QUEEN) != \
+        Move(Square.from_str('b2'), Square.from_str('a1'), Board.ROOK)
 
 
 def test_move_str():
-    assert str(Move(Square.from_str(SquareStr('a3')), Square.from_str(SquareStr(SquareStr('a4'))))) == 'a3a4'
+    assert str(Move(Square.from_str('a3'), Square.from_str('a4'))) == 'a3a4'
     assert \
-        str(Move(Square.from_str(SquareStr('b2')), Square.from_str(SquareStr(SquareStr('a1'))), Board.QUEEN)) == 'b2a1q'
+        str(Move(Square.from_str('b2'), Square.from_str('a1'), Board.QUEEN)) == 'b2a1q'
 
 
 def test_move_from_str():
-    assert str(Move.from_str(MoveStr('a3a4'))) == 'a3a4'
-    assert str(Move.from_str(MoveStr('b2a1q'))) == 'b2a1q'
+    assert str(Move.from_str('a3a4')) == 'a3a4'
+    assert str(Move.from_str('b2a1q')) == 'b2a1q'
 
 
 def test_fen(basic_fens):
