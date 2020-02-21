@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import NewType, Optional, Dict, Any
+from typing import NewType, Optional, Dict, Any, Set
 
 Piece = NewType('Piece', int)
 Color = NewType('Color', int)
@@ -83,7 +83,7 @@ class Board:
 
     _pieces: Dict[Any, Any]
     _turn: Color
-    _castling: str
+    _castling: Set[str]
     _enpassant: Optional[Square]
     _halfmove: int
     _fullmove: int
@@ -119,7 +119,16 @@ class Board:
 
         self._turn = self.WHITE if side == 'w' else self.BLACK
 
-        self._castling = castling
+        self.clear_castling()
+        if 'K' in castling:
+            self.set_king_castling(self.WHITE)
+        if 'k' in castling:
+            self.set_king_castling(self.BLACK)
+        if 'Q' in castling:
+            self.set_queen_castling(self.WHITE)
+        if 'q' in castling:
+            self.set_queen_castling(self.BLACK)
+
         if enpassant == '-':
             self.clear_enpassant()
         else:
@@ -148,7 +157,7 @@ class Board:
         return ' '.join([
             '/'.join(s),
             'w' if self._turn == self.WHITE else 'b',
-            str(self._castling),
+            self._castling_to_str(),
             str(self._enpassant) if self._enpassant else '-',
             repr(self._halfmove),
             repr(self._fullmove),
@@ -178,7 +187,7 @@ class Board:
     def clear(self):
         self._pieces = {}
         self._turn = self.WHITE
-        self._castling = ''
+        self.clear_castling()
         self.clear_enpassant()
         self._halfmove = 0
         self._fullmove = 1
@@ -188,6 +197,41 @@ class Board:
 
     def clear_enpassant(self):
         self._enpassant = None
+
+    def clear_castling(self):
+        self._castling = set()
+
+    def has_any_castling(self):
+        return self._castling
+
+    def has_queen_castling(self, color: Color):
+        return ('Q' if color == self.WHITE else 'q') in self._castling
+
+    def has_king_castling(self, color: Color):
+        return ('K' if color == self.WHITE else 'k') in self._castling
+
+    def set_queen_castling(self, color: Color):
+        self._castling.add('Q' if color == self.WHITE else 'q')
+
+    def set_king_castling(self, color: Color):
+        self._castling.add('K' if color == self.WHITE else 'k')
+
+    def unset_queen_castling(self, color: Color):
+        self._castling.remove('Q' if color == self.WHITE else 'q')
+
+    def unset_king_castling(self, color: Color):
+        self._castling.remove('K' if color == self.WHITE else 'k')
+
+    def _castling_to_str(self):
+        if not self.has_any_castling():
+            return '-'
+        else:
+            return "".join([
+                'K' if self.has_king_castling(self.WHITE) else '',
+                'Q' if self.has_queen_castling(self.WHITE) else '',
+                'k' if self.has_king_castling(self.BLACK) else '',
+                'q' if self.has_queen_castling(self.BLACK) else '',
+            ])
 
     def __setitem__(self, key, value):
         if value is None:
