@@ -114,7 +114,7 @@ class Board:
                 else:
                     piece_color = self.BLACK if piece_char.islower() else self.WHITE
                     piece = self.char_to_piece(piece_char.lower())
-                    self[7 - irank, file] = piece, piece_color
+                    self[Square(file, 7 - irank)] = piece, piece_color
                     file += 1
 
         self._turn = self.WHITE if side == 'w' else self.BLACK
@@ -136,7 +136,7 @@ class Board:
                     if empty:
                         ss.append(str(empty))
                         empty = 0
-                    ss.append(self.piece_to_char(*self[7 - irank, file]))
+                    ss.append(self.piece_to_char(*self[Square(file, 7 - irank)]))
             if empty:
                 ss.append(str(empty))
 
@@ -169,17 +169,15 @@ class Board:
         self._fullmove = 1
 
     def __setitem__(self, key, value):
-        rank, file = key
         if value is None:
-            if (rank, file) in self._pieces:
-                del self._pieces[rank, file]
+            if (key.rank, key.file) in self._pieces:
+                del self._pieces[key.rank, key.file]
         else:
             piece, color = value
-            self._pieces[rank, file] = (piece, color)
+            self._pieces[key.rank, key.file] = (piece, color)
 
     def __getitem__(self, key):
-        rank, file = key
-        return self._pieces.get((rank, file), None)
+        return self._pieces.get((key.rank, key.file), None)
 
     def __contains__(self, key):
         rank, file = key

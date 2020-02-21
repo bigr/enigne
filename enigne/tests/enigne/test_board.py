@@ -46,3 +46,16 @@ def test_move_from_str():
 def test_fen(basic_fens):
     for fen, *_ in basic_fens:
         assert Board(fen).fen() == fen
+
+
+def test_board_set_get():
+    board = Board()
+    sq = Square.from_str('b2')
+    assert board[sq] is None
+    for piece in {(Board.PAWN, Board.WHITE), (Board.BISHOP, Board.BLACK)}:
+        board[sq] = piece
+        assert board[sq] == piece
+    board[sq] = None
+    assert board[sq] is None
+    assert board.fen() == Board().fen()
+
