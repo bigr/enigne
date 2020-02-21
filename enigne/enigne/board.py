@@ -84,7 +84,7 @@ class Board:
     _pieces: Dict[Any, Any]
     _turn: Color
     _castling: str
-    _enpassant: str
+    _enpassant: Optional[Square]
     _halfmove: int
     _fullmove: int
 
@@ -120,7 +120,10 @@ class Board:
         self._turn = self.WHITE if side == 'w' else self.BLACK
 
         self._castling = castling
-        self._enpassant = enpassant
+        if enpassant == '-':
+            self.clear_enpassant()
+        else:
+            self.set_enpassant(Square.from_str(enpassant).file, self.WHITE if self._turn == self.BLACK else self.BLACK)
         self._halfmove = int(halfmove)
         self._fullmove = int(fullmove)
 
@@ -146,7 +149,7 @@ class Board:
             '/'.join(s),
             'w' if self._turn == self.WHITE else 'b',
             str(self._castling),
-            str(self._enpassant),
+            str(self._enpassant) if self._enpassant else '-',
             repr(self._halfmove),
             repr(self._fullmove),
         ])
@@ -176,9 +179,15 @@ class Board:
         self._pieces = {}
         self._turn = self.WHITE
         self._castling = ''
-        self._enpassant = '-'
+        self.clear_enpassant()
         self._halfmove = 0
         self._fullmove = 1
+
+    def set_enpassant(self, file: File, color: Color):
+        self._enpassant = Square(file, Rank(2 if color == self.WHITE else 5))
+
+    def clear_enpassant(self):
+        self._enpassant = None
 
     def __setitem__(self, key, value):
         if value is None:
