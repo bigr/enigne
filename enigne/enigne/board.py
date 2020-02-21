@@ -114,7 +114,7 @@ class Board:
                 else:
                     piece_color = self.BLACK if piece_char.islower() else self.WHITE
                     piece = self.char_to_piece(piece_char.lower())
-                    self[Square(file, 7 - irank)] = piece, piece_color
+                    self[Square(File(file), Rank(7 - irank))] = piece, piece_color
                     file += 1
 
         self._turn = self.WHITE if side == 'w' else self.BLACK
@@ -136,7 +136,7 @@ class Board:
                     if empty:
                         ss.append(str(empty))
                         empty = 0
-                    ss.append(self.piece_to_char(*self[Square(file, 7 - irank)]))
+                    ss.append(self.piece_to_char(*self[Square(File(file), Rank(7 - irank))]))
             if empty:
                 ss.append(str(empty))
 
@@ -188,7 +188,10 @@ class Board:
         for irank in range(8):
             s.append('| ')
             s.append(" | ".join(
-                self.piece_to_char(*self[7 - irank, file]) if (7 - irank, file) in self else " " for file in range(8)
+                self.piece_to_char(
+                    *self[Square(File(file), Rank(7 - irank))]
+                ) if (7 - irank, file) in self else " "
+                for file in range(8)
             ))
             s.append(" |\n+-" + "--+-" * 7 + "--+\n")
         return "".join(s)
