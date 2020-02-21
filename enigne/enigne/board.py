@@ -233,6 +233,31 @@ class Board:
                 'q' if self.has_queen_castling(self.BLACK) else '',
             ])
 
+    def move(self, move: Move):
+        piece, color = self[move.start]
+
+        # Enpassant square
+        if piece == self.PAWN and abs(move.start.rank - move.end.rank) == 2:
+            self.set_enpassant(move.start.file, self._turn)
+        else:
+            self.clear_enpassant()
+
+        # Half move counter
+        if piece == self.PAWN or self[move.end] is not None:
+            self._halfmove = 0
+        else:
+            self._halfmove += 1
+
+        # Full move counter
+        if self.turn == self.BLACK:
+            self._fullmove += 1
+
+        # Move it self
+        self[move.end], self[move.start] = self[move.start], None
+
+        # Change side
+        self._turn = self.opponent
+
     def __setitem__(self, key, value):
         if value is None:
             if (key.rank, key.file) in self._pieces:
