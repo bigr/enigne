@@ -165,6 +165,8 @@ class Board:
         self._turn = self.WHITE
         self._castling = ''
         self._enpassant = '-'
+        self._halfmove = 0
+        self._fullmove = 1
 
     def __setitem__(self, key, value):
         rank, file = key
