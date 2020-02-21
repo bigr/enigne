@@ -237,12 +237,6 @@ class Board:
         piece, color = self[move.start]
         captured_piece, _ = self[move.end] or (None, None)
 
-        # Enpassant square
-        if piece == self.PAWN and abs(move.start.rank - move.end.rank) == 2:
-            self.set_enpassant(move.start.file, self._turn)
-        else:
-            self.clear_enpassant()
-
         # Half move counter
         if piece == self.PAWN or self[move.end] is not None:
             self._halfmove = 0
@@ -255,6 +249,17 @@ class Board:
 
         # Move it self
         self[move.end], self[move.start] = self[move.start], None
+
+        # Enpassant capture
+        if self._enpassant and piece == self.PAWN and move.end.file == self._enpassant.file:
+            if move.end.rank == self._rel_rank(Rank(5)):
+                self[Square(move.end.file, self._rel_rank(Rank(4)))] = None
+
+        # Enpassant square
+        if piece == self.PAWN and abs(move.start.rank - move.end.rank) == 2:
+            self.set_enpassant(move.start.file, self.turn)
+        else:
+            self.clear_enpassant()
 
         # Castling
         if piece == self.KING and abs(move.start.file - move.end.file) == 2:
