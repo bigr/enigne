@@ -247,8 +247,7 @@ class Board:
         if self.turn == self.BLACK:
             self._fullmove += 1
 
-        # Move it self
-        self[move.end], self[move.start] = self[move.start], None
+        self[move.end], self[move.start] = ((move.promote, self.turn) if move.promote else self[move.start]), None
 
         # Enpassant capture
         if self._enpassant and piece == self.PAWN and move.end.file == self._enpassant.file:
