@@ -235,6 +235,7 @@ class Board:
 
     def move(self, move: Move):
         piece, color = self[move.start]
+        captured_piece, _ = self[move.end] or (None, None)
 
         # Enpassant square
         if piece == self.PAWN and abs(move.start.rank - move.end.rank) == 2:
@@ -254,6 +255,32 @@ class Board:
 
         # Move it self
         self[move.end], self[move.start] = self[move.start], None
+
+        # Castling
+        if piece == self.KING and abs(move.start.file - move.end.file) == 2:
+            if move.end.file == File(6):
+                start = Square(File(7), move.end.rank)
+                end = Square(File(5), move.end.rank)
+            else:
+                start = Square(File(0), move.end.rank)
+                end = Square(File(3), move.end.rank)
+
+            self[end], self[start] = self[start], None
+
+        # Castling flags
+        if piece == self.KING:
+            self.unset_king_castling(self.turn)
+            self.unset_queen_castling(self.turn)
+        if piece == self.ROOK and move.start.rank == self._rel_rank(Rank(0)):
+            if move.start.file == File(0):
+                self.unset_queen_castling(self.turn)
+            elif move.start.file == File(7):
+                self.unset_king_castling(self.turn)
+        if captured_piece == self.ROOK and move.end.rank == self._rel_rank(Rank(7)):
+            if move.end.file == File(0):
+                self.unset_queen_castling(self.opponent)
+            elif move.end.file == File(7):
+                self.unset_king_castling(self.opponent)
 
         # Change side
         self._turn = self.opponent
