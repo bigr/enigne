@@ -59,3 +59,10 @@ def test_board_set_get():
     assert board[sq] is None
     assert board.fen() == Board().fen()
 
+
+def test_board_move(basic_fens):
+    for (start_fen, mv, *_), (end_fen, *_) in zip(basic_fens[:-1], basic_fens[1:]):
+        if mv:
+            board = Board(start_fen)
+            board.move(Move.from_str(mv))
+            assert board.fen() == Board(end_fen).fen()

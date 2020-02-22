@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import NewType, Optional, Dict, Any
+from typing import NewType, Optional, Dict, Any, Set
 
 Piece = NewType('Piece', int)
 Color = NewType('Color', int)
@@ -83,8 +83,8 @@ class Board:
 
     _pieces: Dict[Any, Any]
     _turn: Color
-    _castling: str
-    _enpassant: str
+    _castling: Set[str]
+    _enpassant: Optional[Square]
     _halfmove: int
     _fullmove: int
 
@@ -119,8 +119,20 @@ class Board:
 
         self._turn = self.WHITE if side == 'w' else self.BLACK
 
-        self._castling = castling
-        self._enpassant = enpassant
+        self.clear_castling()
+        if 'K' in castling:
+            self.set_king_castling(self.WHITE)
+        if 'k' in castling:
+            self.set_king_castling(self.BLACK)
+        if 'Q' in castling:
+            self.set_queen_castling(self.WHITE)
+        if 'q' in castling:
+            self.set_queen_castling(self.BLACK)
+
+        if enpassant == '-':
+            self.clear_enpassant()
+        else:
+            self.set_enpassant(Square.from_str(enpassant).file, self.WHITE if self._turn == self.BLACK else self.BLACK)
         self._halfmove = int(halfmove)
         self._fullmove = int(fullmove)
 
@@ -145,8 +157,8 @@ class Board:
         return ' '.join([
             '/'.join(s),
             'w' if self._turn == self.WHITE else 'b',
-            str(self._castling),
-            str(self._enpassant),
+            self._castling_to_str(),
+            str(self._enpassant) if self._enpassant else '-',
             repr(self._halfmove),
             repr(self._fullmove),
         ])
@@ -160,13 +172,122 @@ class Board:
         else:
             self.clear()
 
+    @property
+    def turn(self) -> Color:
+        return self._turn
+
+    @property
+    def opponent(self) -> Color:
+        return self.WHITE if self.turn == self.BLACK else self.BLACK
+
+    def _rel_rank(self, rank: Rank) -> Rank:
+        """Rank from point of the view of side to turn"""
+        return Rank(7 - int(rank)) if self.turn == Board.BLACK else rank
+
     def clear(self):
         self._pieces = {}
         self._turn = self.WHITE
-        self._castling = ''
-        self._enpassant = '-'
+        self.clear_castling()
+        self.clear_enpassant()
         self._halfmove = 0
         self._fullmove = 1
+
+    def set_enpassant(self, file: File, color: Color):
+        self._enpassant = Square(file, Rank(2 if color == self.WHITE else 5))
+
+    def clear_enpassant(self):
+        self._enpassant = None
+
+    def clear_castling(self):
+        self._castling = set()
+
+    def has_any_castling(self):
+        return self._castling
+
+    def has_queen_castling(self, color: Color):
+        return ('Q' if color == self.WHITE else 'q') in self._castling
+
+    def has_king_castling(self, color: Color):
+        return ('K' if color == self.WHITE else 'k') in self._castling
+
+    def set_queen_castling(self, color: Color):
+        self._castling.add('Q' if color == self.WHITE else 'q')
+
+    def set_king_castling(self, color: Color):
+        self._castling.add('K' if color == self.WHITE else 'k')
+
+    def unset_queen_castling(self, color: Color):
+        self._castling.remove('Q' if color == self.WHITE else 'q')
+
+    def unset_king_castling(self, color: Color):
+        self._castling.remove('K' if color == self.WHITE else 'k')
+
+    def _castling_to_str(self):
+        if not self.has_any_castling():
+            return '-'
+        else:
+            return "".join([
+                'K' if self.has_king_castling(self.WHITE) else '',
+                'Q' if self.has_queen_castling(self.WHITE) else '',
+                'k' if self.has_king_castling(self.BLACK) else '',
+                'q' if self.has_queen_castling(self.BLACK) else '',
+            ])
+
+    def move(self, move: Move):
+        piece, color = self[move.start]
+        captured_piece, _ = self[move.end] or (None, None)
+
+        # Half move counter
+        if piece == self.PAWN or self[move.end] is not None:
+            self._halfmove = 0
+        else:
+            self._halfmove += 1
+
+        # Full move counter
+        if self.turn == self.BLACK:
+            self._fullmove += 1
+
+        self[move.end], self[move.start] = ((move.promote, self.turn) if move.promote else self[move.start]), None
+
+        # Enpassant capture
+        if self._enpassant and piece == self.PAWN and move.end.file == self._enpassant.file:
+            if move.end.rank == self._rel_rank(Rank(5)):
+                self[Square(move.end.file, self._rel_rank(Rank(4)))] = None
+
+        # Enpassant square
+        if piece == self.PAWN and abs(move.start.rank - move.end.rank) == 2:
+            self.set_enpassant(move.start.file, self.turn)
+        else:
+            self.clear_enpassant()
+
+        # Castling
+        if piece == self.KING and abs(move.start.file - move.end.file) == 2:
+            if move.end.file == File(6):
+                start = Square(File(7), move.end.rank)
+                end = Square(File(5), move.end.rank)
+            else:
+                start = Square(File(0), move.end.rank)
+                end = Square(File(3), move.end.rank)
+
+            self[end], self[start] = self[start], None
+
+        # Castling flags
+        if piece == self.KING:
+            self.unset_king_castling(self.turn)
+            self.unset_queen_castling(self.turn)
+        if piece == self.ROOK and move.start.rank == self._rel_rank(Rank(0)):
+            if move.start.file == File(0):
+                self.unset_queen_castling(self.turn)
+            elif move.start.file == File(7):
+                self.unset_king_castling(self.turn)
+        if captured_piece == self.ROOK and move.end.rank == self._rel_rank(Rank(7)):
+            if move.end.file == File(0):
+                self.unset_queen_castling(self.opponent)
+            elif move.end.file == File(7):
+                self.unset_king_castling(self.opponent)
+
+        # Change side
+        self._turn = self.opponent
 
     def __setitem__(self, key, value):
         if value is None:
