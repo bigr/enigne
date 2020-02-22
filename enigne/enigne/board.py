@@ -160,6 +160,18 @@ class Board:
         else:
             self.clear()
 
+    @property
+    def turn(self) -> Color:
+        return self._turn
+
+    @property
+    def opponent(self) -> Color:
+        return self.WHITE if self.turn == self.BLACK else self.BLACK
+
+    def _rel_rank(self, rank: Rank) -> Rank:
+        """Rank from point of the view of side to turn"""
+        return Rank(7 - int(rank)) if self.turn == Board.BLACK else rank
+
     def clear(self):
         self._pieces = {}
         self._turn = self.WHITE
