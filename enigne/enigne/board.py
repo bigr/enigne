@@ -40,6 +40,9 @@ class Square:
     def __str__(self):
         return f"{chr(ord('a') + int(self.file))}{int(self.rank) + 1}"
 
+    def __hash__(self):
+        return self._file | (self._rank << 3)
+
 
 class Move:
     _start: Square
