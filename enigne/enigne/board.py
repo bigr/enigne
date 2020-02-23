@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import NewType, Optional, Dict, Any, Set
+from typing import NewType, Optional, Dict, Any, Set, Tuple
 
 Piece = NewType('Piece', int)
 Color = NewType('Color', int)
 File = NewType('File', int)
 Rank = NewType('Rank', int)
+ColoredPiece = Tuple[Piece, Color]
 
 
 class Square:
@@ -103,7 +104,7 @@ class Board:
         ret = ['p', 'b', 'n', 'r', 'q', 'k'][int(piece) - 1]
         return ret.upper() if color == cls.WHITE else ret
 
-    def load_fen(self, fen: str):
+    def load_fen(self, fen: str) -> None:
         self.clear()
         piece_placement, side, castling, enpassant, halfmove, fullmove = fen.split(' ')
         for irank, pieces in enumerate(piece_placement.split('/')):
@@ -163,7 +164,7 @@ class Board:
             repr(self._fullmove),
         ])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.fen()
 
     def __init__(self, fen: Optional[str] = None):
@@ -184,7 +185,7 @@ class Board:
         """Rank from point of the view of side to turn"""
         return Rank(7 - int(rank)) if self.turn == Board.BLACK else rank
 
-    def clear(self):
+    def clear(self) -> None:
         self._pieces = {}
         self._turn = self.WHITE
         self.clear_castling()
@@ -192,37 +193,37 @@ class Board:
         self._halfmove = 0
         self._fullmove = 1
 
-    def set_enpassant(self, file: File, color: Color):
+    def set_enpassant(self, file: File, color: Color) -> None:
         self._enpassant = Square(file, Rank(2 if color == self.WHITE else 5))
 
-    def clear_enpassant(self):
+    def clear_enpassant(self) -> None:
         self._enpassant = None
 
-    def clear_castling(self):
+    def clear_castling(self) -> None:
         self._castling = set()
 
-    def has_any_castling(self):
-        return self._castling
+    def has_any_castling(self) -> bool:
+        return bool(self._castling)
 
-    def has_queen_castling(self, color: Color):
+    def has_queen_castling(self, color: Color) -> bool:
         return ('Q' if color == self.WHITE else 'q') in self._castling
 
-    def has_king_castling(self, color: Color):
+    def has_king_castling(self, color: Color) -> bool:
         return ('K' if color == self.WHITE else 'k') in self._castling
 
-    def set_queen_castling(self, color: Color):
+    def set_queen_castling(self, color: Color) -> None:
         self._castling.add('Q' if color == self.WHITE else 'q')
 
-    def set_king_castling(self, color: Color):
+    def set_king_castling(self, color: Color) -> None:
         self._castling.add('K' if color == self.WHITE else 'k')
 
-    def unset_queen_castling(self, color: Color):
+    def unset_queen_castling(self, color: Color) -> None:
         self._castling.remove('Q' if color == self.WHITE else 'q')
 
-    def unset_king_castling(self, color: Color):
+    def unset_king_castling(self, color: Color) -> None:
         self._castling.remove('K' if color == self.WHITE else 'k')
 
-    def _castling_to_str(self):
+    def _castling_to_str(self) -> str:
         if not self.has_any_castling():
             return '-'
         else:
@@ -233,7 +234,7 @@ class Board:
                 'q' if self.has_queen_castling(self.BLACK) else '',
             ])
 
-    def move(self, move: Move):
+    def move(self, move: Move) -> None:
         piece, color = self[move.start]
         captured_piece, _ = self[move.end] or (None, None)
 
@@ -289,7 +290,7 @@ class Board:
         # Change side
         self._turn = self.opponent
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Square, value: Optional[ColoredPiece]) -> None:
         if value is None:
             if (key.rank, key.file) in self._pieces:
                 del self._pieces[key.rank, key.file]
@@ -297,21 +298,21 @@ class Board:
             piece, color = value
             self._pieces[key.rank, key.file] = (piece, color)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Square) -> Optional[ColoredPiece]:
         return self._pieces.get((key.rank, key.file), None)
 
-    def __contains__(self, key):
+    def __contains__(self, key: Square) -> bool:
         rank, file = key
         return (rank, file) in self._pieces
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = ["\n+-" + "--+-" * 7 + "--+\n"]
         for irank in range(8):
             s.append('| ')
             s.append(" | ".join(
                 self.piece_to_char(
                     *self[Square(File(file), Rank(7 - irank))]
-                ) if (7 - irank, file) in self else " "
+                ) if Square(File(file), Rank(7 - irank)) in self else " "
                 for file in range(8)
             ))
             s.append(" |\n+-" + "--+-" * 7 + "--+\n")
