@@ -43,6 +43,9 @@ class Square:
     def __hash__(self):
         return self._file | (self._rank << 3)
 
+    def __add__(self, other: Tuple[int, int]) -> Square:
+        return Square(File(int(self.file) + other[0]), Rank(int(self.rank) + other[1]))
+
 
 class Move:
     _start: Square
