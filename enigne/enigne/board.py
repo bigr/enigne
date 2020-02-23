@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import NewType, Optional, Dict, Any, Set, Tuple
+from typing import NewType, Optional, Dict, Any, Set, Tuple, Iterator
 
 Piece = NewType('Piece', int)
 Color = NewType('Color', int)
@@ -250,6 +250,19 @@ class Board:
                 'k' if self.has_king_castling(self.BLACK) else '',
                 'q' if self.has_queen_castling(self.BLACK) else '',
             ])
+
+    def iter_pieces(self, color: Color) -> Iterator[Tuple[Square, Piece]]:
+        yield from (
+            (Square(File(file), Rank(rank)), pc)
+            for (rank, file), (pc, cl) in self._pieces.items()
+            if cl == color
+        )
+
+    def iter_own_pieces(self):
+        yield from self.iter_pieces(self.turn)
+
+    def iter_opponent_pieces(self):
+        yield from self.iter_pieces(self.opponent)
 
     def move(self, move: Move) -> None:
         piece, color = self[move.start]

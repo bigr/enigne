@@ -68,6 +68,30 @@ def test_board_set_get():
     assert board.fen() == Board().fen()
 
 
+def test_board_pieces_of_color(basic_fens):
+    board = Board(basic_fens[0][0])
+    assert board.own_pieces(Square.from_str('e2')) == Board.PAWN
+    assert board.own_pieces(Square.from_str('e7')) is None
+    assert board.own_pieces(Square.from_str('e5')) is None
+    assert board.opponent_pieces(Square.from_str('e2')) is None
+    assert board.opponent_pieces(Square.from_str('e7')) == Board.PAWN
+    assert board.opponent_pieces(Square.from_str('e5')) is None
+
+
+
+def test_board_iter_pieces(basic_fens):
+    for fen, *_ in basic_fens:
+        board = Board(fen)
+        ret = set(board.iter_pieces(Board.WHITE))
+        ref = set(
+            (Square(File(f), Rank(r)), board[Square(File(f), Rank(r))][0])
+            for f in range(8) for r in range(8)
+            if board[Square(File(f), Rank(r))] is not None and board[Square(File(f), Rank(r))][1] == Board.WHITE
+        )
+        assert ret == ref
+
+
+
 def test_board_move(basic_fens):
     for (start_fen, mv, *_), (end_fen, *_) in zip(basic_fens[:-1], basic_fens[1:]):
         if mv:
