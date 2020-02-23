@@ -60,3 +60,10 @@ def move_gen(board: Board) -> Iterable[Move]:
     for square, piece in board.iter_own_pieces():
         if piece == Board.PAWN:
             yield from _pawn_moves(board, square)
+
+
+def move_gen(board: Board) -> Iterable[Move]:
+    """Generates pseudo-legal moves."""
+    for square, piece in board.iter_own_pieces():
+        if piece == Board.PAWN:
+            yield from _pawn_moves(board, square)
