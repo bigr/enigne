@@ -181,7 +181,7 @@ class Board:
     def opponent(self) -> Color:
         return self.WHITE if self.turn == self.BLACK else self.BLACK
 
-    def _rel_rank(self, rank: Rank) -> Rank:
+    def rel_rank(self, rank: Rank) -> Rank:
         """Rank from point of the view of side to turn"""
         return Rank(7 - int(rank)) if self.turn == Board.BLACK else rank
 
@@ -252,8 +252,8 @@ class Board:
 
         # Enpassant capture
         if self._enpassant and piece == self.PAWN and move.end.file == self._enpassant.file:
-            if move.end.rank == self._rel_rank(Rank(5)):
-                self[Square(move.end.file, self._rel_rank(Rank(4)))] = None
+            if move.end.rank == self.rel_rank(Rank(5)):
+                self[Square(move.end.file, self.rel_rank(Rank(4)))] = None
 
         # Enpassant square
         if piece == self.PAWN and abs(move.start.rank - move.end.rank) == 2:
@@ -276,12 +276,12 @@ class Board:
         if piece == self.KING:
             self.unset_king_castling(self.turn)
             self.unset_queen_castling(self.turn)
-        if piece == self.ROOK and move.start.rank == self._rel_rank(Rank(0)):
+        if piece == self.ROOK and move.start.rank == self.rel_rank(Rank(0)):
             if move.start.file == File(0):
                 self.unset_queen_castling(self.turn)
             elif move.start.file == File(7):
                 self.unset_king_castling(self.turn)
-        if captured_piece == self.ROOK and move.end.rank == self._rel_rank(Rank(7)):
+        if captured_piece == self.ROOK and move.end.rank == self.rel_rank(Rank(7)):
             if move.end.file == File(0):
                 self.unset_queen_castling(self.opponent)
             elif move.end.file == File(7):
