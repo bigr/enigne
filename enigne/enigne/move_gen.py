@@ -75,6 +75,17 @@ def move_gen(board: Board) -> Iterable[Move]:
                 if m != 0 or n != 0
             )
 
+            if board.has_king_castling(board.turn) \
+                    and board[square + (1, 0)] is None and board[square + (2, 0)] is None:
+
+                yield Move(square, square + (2, 0))
+
+            if board.has_queen_castling(board.turn) and \
+                    board[square + (-1, 0)] is None and board[square + (-2, 0)] is None \
+                    and board[square + (-3, 0)] is None:
+
+                yield Move(square, square + (-3, 0))
+
         elif piece == Board.KNIGHT:
             yield from (
                 move
