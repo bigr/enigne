@@ -90,3 +90,10 @@ def move_gen(board: Board) -> Iterable[Move]:
                 for move in _rider_moves(board, square, m, n)
                 if abs(m) + abs(n) == 1
             )
+
+        elif piece == Board.BISHOP:
+            yield from (
+                move
+                for m in {1, -1} for n in {1, -1}
+                for move in _rider_moves(board, square, m, n)
+            )
