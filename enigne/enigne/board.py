@@ -186,6 +186,10 @@ class Board:
     def turn(self) -> Color:
         return self._turn
 
+    @turn.setter
+    def turn(self, value: Color) -> None:
+        self._turn = value
+
     @property
     def opponent(self) -> Color:
         return self.WHITE if self.turn == self.BLACK else self.BLACK
