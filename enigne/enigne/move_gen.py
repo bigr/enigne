@@ -67,3 +67,10 @@ def move_gen(board: Board) -> Iterable[Move]:
     for square, piece in board.iter_own_pieces():
         if piece == Board.PAWN:
             yield from _pawn_moves(board, square)
+        elif piece == Board.KING:
+            yield from (
+                move
+                for m in {1, 0, -1} for n in {1, 0, -1}
+                for move in _leaper_moves(board, square, m, n)
+                if m != 0 or n != 0
+            )
