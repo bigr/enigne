@@ -45,6 +45,17 @@ def _leaper_moves(board: Board, square: Square, m: int, n: int) -> Iterable[Move
         yield Move(square, square + (m, n))
 
 
+def _rider_moves(board: Board, square: Square, m: int, n: int) -> Iterable[Move]:
+    end = square
+    for step in range(7):
+        end = end + (m, n)
+        if not end.is_valid() or board.own_pieces(end) is not None:
+            break
+        yield Move(square, end)
+        if board.opponent_pieces(end) is not None:
+            break
+
+
 def move_gen(board: Board) -> Iterable[Move]:
     for square, piece in board.iter_own_pieces():
         if piece == Board.PAWN:
