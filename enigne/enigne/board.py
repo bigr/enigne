@@ -31,6 +31,9 @@ class Square:
         rank = Rank(int(rank_str) - 1)
         return cls(file, rank)
 
+    def is_valid(self) -> bool:
+        return 0 <= self.file < 8 and 0 <= self.rank < 8
+
     def __eq__(self, other):
         return self.file == other.file and self.rank == other.rank
 

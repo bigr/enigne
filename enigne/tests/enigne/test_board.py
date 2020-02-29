@@ -14,6 +14,14 @@ def test_square_from_str():
     assert str(Square.from_str('c6')) == 'c6'
 
 
+def test_square_is_valid():
+    assert all(Square(File(file), Rank(rank)).is_valid() for file in range(8) for rank in range(8))
+    assert not Square(File(-1), Rank(4)).is_valid()
+    assert not Square(File(8), Rank(4)).is_valid()
+    assert not Square(File(3), Rank(-1)).is_valid()
+    assert not Square(File(3), Rank(8)).is_valid()
+
+
 def test_move_eq():
     assert \
         Move(Square.from_str('a3'), Square.from_str('a4')) == \
