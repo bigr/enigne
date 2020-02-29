@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import NewType, Optional, Dict, Any, Set, Tuple
+from typing import NewType, Optional, Dict, Any, Set, Tuple, Iterator
 
 Piece = NewType('Piece', int)
 Color = NewType('Color', int)
@@ -31,6 +31,9 @@ class Square:
         rank = Rank(int(rank_str) - 1)
         return cls(file, rank)
 
+    def is_valid(self) -> bool:
+        return 0 <= self.file < 8 and 0 <= self.rank < 8
+
     def __eq__(self, other):
         return self.file == other.file and self.rank == other.rank
 
@@ -39,6 +42,12 @@ class Square:
 
     def __str__(self):
         return f"{chr(ord('a') + int(self.file))}{int(self.rank) + 1}"
+
+    def __hash__(self):
+        return self._file | (self._rank << 3)
+
+    def __add__(self, other: Tuple[int, int]) -> Square:
+        return Square(File(int(self.file) + other[0]), Rank(int(self.rank) + other[1]))
 
 
 class Move:
@@ -177,9 +186,17 @@ class Board:
     def turn(self) -> Color:
         return self._turn
 
+    @turn.setter
+    def turn(self, value: Color) -> None:
+        self._turn = value
+
     @property
     def opponent(self) -> Color:
         return self.WHITE if self.turn == self.BLACK else self.BLACK
+
+    @property
+    def enpassant(self) -> Optional[Square]:
+        return self._enpassant
 
     def rel_rank(self, rank: Rank) -> Rank:
         """Rank from point of the view of side to turn"""
@@ -233,6 +250,19 @@ class Board:
                 'k' if self.has_king_castling(self.BLACK) else '',
                 'q' if self.has_queen_castling(self.BLACK) else '',
             ])
+
+    def iter_pieces(self, color: Color) -> Iterator[Tuple[Square, Piece]]:
+        yield from (
+            (Square(File(file), Rank(rank)), pc)
+            for (rank, file), (pc, cl) in self._pieces.items()
+            if cl == color
+        )
+
+    def iter_own_pieces(self):
+        yield from self.iter_pieces(self.turn)
+
+    def iter_opponent_pieces(self):
+        yield from self.iter_pieces(self.opponent)
 
     def move(self, move: Move) -> None:
         piece, color = self[move.start]
@@ -289,6 +319,22 @@ class Board:
 
         # Change side
         self._turn = self.opponent
+
+    def pieces(self, square: Square, filter_color: Color, filter_piece: Optional[Piece] = None) -> Optional[Piece]:
+        colored_piece = self[square]
+        if colored_piece is None:
+            return None
+        else:
+            piece, color = colored_piece
+            if filter_piece is not None and filter_piece != piece:
+                return None
+            return piece if filter_color == color else None
+
+    def opponent_pieces(self, square: Square, filter_piece: Optional[Piece] = None) -> Optional[Piece]:
+        return self.pieces(square, self.opponent, filter_piece)
+
+    def own_pieces(self, square: Square, filter_piece: Optional[Piece] = None) -> Optional[Piece]:
+        return self.pieces(square, self.turn, filter_piece)
 
     def __setitem__(self, key: Square, value: Optional[ColoredPiece]) -> None:
         if value is None:
