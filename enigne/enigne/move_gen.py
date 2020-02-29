@@ -97,3 +97,11 @@ def move_gen(board: Board) -> Iterable[Move]:
                 for m in {1, -1} for n in {1, -1}
                 for move in _rider_moves(board, square, m, n)
             )
+
+        elif piece == Board.QUEEN:
+            yield from (
+                move
+                for m in {1, 0, -1} for n in {1, 0, -1}
+                for move in _rider_moves(board, square, m, n)
+                if m != 0 or n != 0
+            )
