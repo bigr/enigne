@@ -74,3 +74,11 @@ def move_gen(board: Board) -> Iterable[Move]:
                 for move in _leaper_moves(board, square, m, n)
                 if m != 0 or n != 0
             )
+
+        elif piece == Board.KNIGHT:
+            yield from (
+                move
+                for m in {-2, -1, 1, 2} for n in {-2, -1, 1, 2}
+                for move in _leaper_moves(board, square, m, n)
+                if abs(m) + abs(n) == 3
+            )
