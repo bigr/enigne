@@ -68,13 +68,23 @@ def test_board_set_get():
     assert board.fen() == Board().fen()
 
 
-def test_board_pieces_of_color(basic_fens):
+def test_board_pieces(basic_fens):
     board = Board(basic_fens[0][0])
     assert board.own_pieces(Square.from_str('e2')) == Board.PAWN
+    assert board.own_pieces(Square.from_str('e1')) == Board.KING
+    assert board.own_pieces(Square.from_str('e1'), Board.KING) == Board.KING
+    assert board.own_pieces(Square.from_str('e1'), Board.PAWN) is None
     assert board.own_pieces(Square.from_str('e7')) is None
     assert board.own_pieces(Square.from_str('e5')) is None
     assert board.opponent_pieces(Square.from_str('e2')) is None
     assert board.opponent_pieces(Square.from_str('e7')) == Board.PAWN
+    assert board.opponent_pieces(Square.from_str('e5')) is None
+    board.turn = Board.BLACK
+    assert board.own_pieces(Square.from_str('e2')) is None
+    assert board.own_pieces(Square.from_str('e7')) == Board.PAWN
+    assert board.own_pieces(Square.from_str('e5')) is None
+    assert board.opponent_pieces(Square.from_str('e2')) == Board.PAWN
+    assert board.opponent_pieces(Square.from_str('e7')) is None
     assert board.opponent_pieces(Square.from_str('e5')) is None
 
 

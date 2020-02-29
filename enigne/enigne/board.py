@@ -320,6 +320,22 @@ class Board:
         # Change side
         self._turn = self.opponent
 
+    def pieces(self, square: Square, filter_color: Color, filter_piece: Optional[Piece] = None) -> Optional[Piece]:
+        colored_piece = self[square]
+        if colored_piece is None:
+            return None
+        else:
+            piece, color = colored_piece
+            if filter_piece is not None and filter_piece != piece:
+                return None
+            return piece if filter_color == color else None
+
+    def opponent_pieces(self, square: Square, filter_piece: Optional[Piece] = None) -> Optional[Piece]:
+        return self.pieces(square, self.opponent, filter_piece)
+
+    def own_pieces(self, square: Square, filter_piece: Optional[Piece] = None) -> Optional[Piece]:
+        return self.pieces(square, self.turn, filter_piece)
+
     def __setitem__(self, key: Square, value: Optional[ColoredPiece]) -> None:
         if value is None:
             if (key.rank, key.file) in self._pieces:
