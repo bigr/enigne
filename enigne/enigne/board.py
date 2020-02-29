@@ -194,6 +194,10 @@ class Board:
     def opponent(self) -> Color:
         return self.WHITE if self.turn == self.BLACK else self.BLACK
 
+    @property
+    def enpassant(self) -> Optional[Square]:
+        return self._enpassant
+
     def rel_rank(self, rank: Rank) -> Rank:
         """Rank from point of the view of side to turn"""
         return Rank(7 - int(rank)) if self.turn == Board.BLACK else rank
