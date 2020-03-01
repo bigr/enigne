@@ -88,7 +88,6 @@ def test_board_pieces(basic_fens):
     assert board.opponent_pieces(Square.from_str('e5')) is None
 
 
-
 def test_board_iter_pieces(basic_fens):
     for fen, *_ in basic_fens:
         board = Board(fen)
@@ -99,7 +98,6 @@ def test_board_iter_pieces(basic_fens):
             if board[Square(File(f), Rank(r))] is not None and board[Square(File(f), Rank(r))][1] == Board.WHITE
         )
         assert ret == ref
-
 
 
 def test_board_move(basic_fens):
