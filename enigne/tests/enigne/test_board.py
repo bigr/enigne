@@ -88,7 +88,6 @@ def test_board_pieces(basic_fens):
     assert board.opponent_pieces(Square.from_str('e5')) is None
 
 
-
 def test_board_iter_pieces(basic_fens):
     for fen, *_ in basic_fens:
         board = Board(fen)
@@ -101,10 +100,21 @@ def test_board_iter_pieces(basic_fens):
         assert ret == ref
 
 
-
 def test_board_move(basic_fens):
     for (start_fen, mv, *_), (end_fen, *_) in zip(basic_fens[:-1], basic_fens[1:]):
         if mv:
             board = Board(start_fen)
             board.move(Move.from_str(mv))
             assert board.fen() == Board(end_fen).fen()
+
+
+def test_board_undo_move(basic_fens):
+    for (start_fen, mv, *_), (end_fen, *_) in zip(basic_fens[:-1], basic_fens[1:]):
+        if mv:
+            board = Board(start_fen)
+            origin_fen = board.fen()
+
+            with board.do_move(Move.from_str(mv)):
+                assert board.fen() == Board(end_fen).fen()
+
+            assert board.fen() == origin_fen
