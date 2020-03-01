@@ -106,3 +106,15 @@ def test_board_move(basic_fens):
             board = Board(start_fen)
             board.move(Move.from_str(mv))
             assert board.fen() == Board(end_fen).fen()
+
+
+def test_board_undo_move(basic_fens):
+    for (start_fen, mv, *_), (end_fen, *_) in zip(basic_fens[:-1], basic_fens[1:]):
+        if mv:
+            board = Board(start_fen)
+            origin_fen = board.fen()
+
+            with board.do_move(Move.from_str(mv)):
+                assert board.fen() == Board(end_fen).fen()
+
+            assert board.fen() == origin_fen
