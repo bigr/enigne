@@ -264,7 +264,16 @@ class Board:
     def iter_opponent_pieces(self):
         yield from self.iter_pieces(self.opponent)
 
-    def move(self, move: Move) -> None:
+    def move(self, move: Move) -> Any:
+        """
+        Moves pieces on the board.
+        :param move:
+        :return: Data needed for undoing move.
+        """
+
+        undo_info = \
+            self._turn, self._enpassant, self._halfmove, self._fullmove, self._pieces.copy(), self._castling.copy()
+
         piece, color = self[move.start]
         captured_piece, _ = self[move.end] or (None, None)
 
@@ -319,6 +328,8 @@ class Board:
 
         # Change side
         self._turn = self.opponent
+
+        return undo_info
 
     def pieces(self, square: Square, filter_color: Color, filter_piece: Optional[Piece] = None) -> Optional[Piece]:
         colored_piece = self[square]
