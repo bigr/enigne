@@ -236,10 +236,10 @@ class Board:
         self._castling.add('K' if color == self.WHITE else 'k')
 
     def unset_queen_castling(self, color: Color) -> None:
-        self._castling.remove('Q' if color == self.WHITE else 'q')
+        self._castling.discard('Q' if color == self.WHITE else 'q')
 
     def unset_king_castling(self, color: Color) -> None:
-        self._castling.remove('K' if color == self.WHITE else 'k')
+        self._castling.discard('K' if color == self.WHITE else 'k')
 
     def _castling_to_str(self) -> str:
         if not self.has_any_castling():
