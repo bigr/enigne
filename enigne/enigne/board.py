@@ -275,7 +275,7 @@ class Board:
     def iter_pieces(self, color: Color) -> Iterator[Tuple[Square, Piece]]:
         yield from (
             (Square(File(file), Rank(rank)), pc)
-            for (rank, file), (pc, cl) in self._pieces.items()
+            for (rank, file), (pc, cl) in list(self._pieces.items())
             if cl == color
         )
 
