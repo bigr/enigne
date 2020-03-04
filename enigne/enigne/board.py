@@ -21,9 +21,17 @@ class Square:
     def file(self) -> File:
         return self._file
 
+    @file.setter
+    def file(self, val):
+        self._file = val
+
     @property
     def rank(self) -> Rank:
         return self._rank
+
+    @rank.setter
+    def rank(self, val):
+        self._rank = val
 
     @classmethod
     def from_str(cls, square_str: str) -> Square:
