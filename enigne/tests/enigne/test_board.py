@@ -109,12 +109,15 @@ def test_board_move(basic_fens):
 
 
 def test_board_undo_move(basic_fens):
-    for (start_fen, mv, *_), (end_fen, *_) in zip(basic_fens[:-1], basic_fens[1:]):
-        if mv:
-            board = Board(start_fen)
+    for (fen1, mv1, *_), (fen2, mv2, *_), (fen3, *_) in zip(basic_fens[:-2], basic_fens[1:-1], basic_fens[2:]):
+        if mv1:
+            board = Board(fen1)
             origin_fen = board.fen()
 
-            with board.do_move(Move.from_str(mv)):
-                assert board.fen() == Board(end_fen).fen()
+            with board.do_move(Move.from_str(mv1)):
+                assert board.fen() == Board(fen2).fen()
+                if mv2:
+                    with board.do_move(Move.from_str(mv2)):
+                        assert board.fen() == Board(fen3).fen()
 
             assert board.fen() == origin_fen
