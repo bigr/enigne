@@ -58,6 +58,9 @@ class Square:
     def __add__(self, other: Tuple[int, int]) -> Square:
         return Square(File(int(self.file) + other[0]), Rank(int(self.rank) + other[1]))
 
+    def __eq__(self, other):
+        return other.file == self.file and other.rank == self.rank
+
 
 class Move:
     _start: Square
