@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from copy import deepcopy
 from typing import NewType, Optional, Dict, Any, Set, Tuple, Iterator
 
 Piece = NewType('Piece', int)
@@ -192,6 +193,10 @@ class Board:
         return self.fen()
 
     def __init__(self, fen: Optional[str] = None):
+        self._pieces = {}
+        self._castling = set()
+        self._enpassant_obj = Square(File(0), Rank(0))
+        self._enpassant = None
         if fen is not None:
             self.load_fen(fen)
         else:
@@ -218,7 +223,7 @@ class Board:
         return Rank(7 - int(rank)) if self.turn == Board.BLACK else rank
 
     def clear(self) -> None:
-        self._pieces = {}
+        self._pieces.clear()
         self._turn = self.WHITE
         self.clear_castling()
         self.clear_enpassant()
@@ -226,13 +231,14 @@ class Board:
         self._fullmove = 1
 
     def set_enpassant(self, file: File, color: Color) -> None:
-        self._enpassant = Square(file, Rank(2 if color == self.WHITE else 5))
+        self._enpassant_obj.file, self._enpassant_obj.rank = file, Rank(2 if color == self.WHITE else 5)
+        self._enpassant = self._enpassant_obj
 
     def clear_enpassant(self) -> None:
         self._enpassant = None
 
     def clear_castling(self) -> None:
-        self._castling = set()
+        self._castling.clear()
 
     def has_any_castling(self) -> bool:
         return bool(self._castling)
@@ -287,7 +293,8 @@ class Board:
         """
 
         undo_info = \
-            self._turn, self._enpassant, self._halfmove, self._fullmove, self._pieces.copy(), self._castling.copy()
+            self._turn, self._halfmove, self._fullmove, deepcopy(self._enpassant), \
+            self._pieces.copy(), self._castling.copy()
 
         piece, color = self[move.start]
         captured_piece, _ = self[move.end] or (None, None)
@@ -355,7 +362,11 @@ class Board:
             self.undo_move(undo_info)
 
     def undo_move(self, undo_info: Any) -> None:
-        self._turn, self._enpassant, self._halfmove, self._fullmove = undo_info[:4]
+        self._turn, self._halfmove, self._fullmove = undo_info[:3]
+        if undo_info[3] is not None:
+            self.set_enpassant(undo_info[3].file, self.opponent)
+        else:
+            self.clear_enpassant()
         self._pieces.clear()
         self._pieces.update(undo_info[4])
         self._castling.clear()
