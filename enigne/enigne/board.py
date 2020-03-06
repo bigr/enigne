@@ -215,6 +215,14 @@ class Board:
     def enpassant(self) -> Optional[Square]:
         return self._enpassant
 
+    @property
+    def own_king_square(self) -> Square:
+        return next(square for square, piece in self.iter_own_pieces() if piece == Board.KING)
+
+    @property
+    def opponent_king_square(self) -> Square:
+        return next(square for square, piece in self.iter_opponent_pieces() if piece == Board.KING)
+
     def rel_rank(self, rank: Rank) -> Rank:
         """Rank from point of the view of side to turn"""
         return Rank(7 - int(rank)) if self.turn == Board.BLACK else rank
