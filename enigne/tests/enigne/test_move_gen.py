@@ -2,8 +2,8 @@ import pytest
 
 from enigne.board import Board, Square
 from enigne.move_gen import move_gen, attackers, is_attacked
-
-from tests.conftest import basic_fens
+from enigne.perft import perft
+from tests.conftest import perfts, basic_fens
 
 
 @pytest.mark.parametrize("basic_fen", [f for f in basic_fens() if f[2] is not None])
@@ -23,3 +23,19 @@ def test_attackers():
 
     assert is_attacked(board, Square.from_str('d6'), board.WHITE)
     assert not is_attacked(board, Square.from_str('a1'), Board.WHITE)
+
+
+@pytest.mark.parametrize("perft_data", perfts())
+def test_perft(perft_data):
+    fen, node_counts, max_depth, divide_expected = perft_data
+    board = Board(fen)
+    for depth, nodes_expected in enumerate(node_counts, 1):
+        if depth > max_depth:
+            break
+        nodes, divide = perft(board, depth, divide=True)
+        divide = {str(mv): count for mv, count in divide.items()}
+        if divide_expected is None or depth < max_depth:
+            assert nodes == nodes_expected, str(set(divide.keys()))
+        else:
+            assert divide == divide_expected
+            assert nodes == nodes_expected
