@@ -78,7 +78,7 @@ def move_gen(board: Board) -> Iterable[Move]:
                     board[square + (-1, 0)] is None and board[square + (-2, 0)] is None \
                     and board[square + (-3, 0)] is None:
 
-                yield Move(square, square + (-3, 0))
+                yield Move(square, square + (-2, 0))
 
         elif piece == Board.KNIGHT:
             yield from (
