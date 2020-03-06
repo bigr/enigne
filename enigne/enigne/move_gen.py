@@ -113,3 +113,17 @@ def move_gen(board: Board, color: Optional[Color] = None) -> Iterable[Move]:
                 for move in _rider_moves(board, square, m, n, color)
                 if m != 0 or n != 0
             )
+
+
+def attackers(board: Board, square: Square, color: Optional[Color]) -> Iterable[Square]:
+    """Returns square of pieces of given color that attacks given square."""
+    yield from (move.start for move in move_gen(board, color) if move.end == square)
+
+
+def is_attacked(board: Board, square: Square, color: Optional[Color]) -> bool:
+    """True if square is attacked by given color."""
+    return any(True for _ in attackers(board, square, color))
+
+
+def in_check(board: Board):
+    return is_attacked(board, board.own_king_square, board.opponent)
