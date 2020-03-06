@@ -11,5 +11,6 @@ def test_move_gen(basic_fen):
     fen, _, moves_ref, *_ = basic_fen
     board = Board(fen)
     moves = list(move_gen(board))
+    assert len(moves) == len(set(moves)), (board.fen(), ",".join(str(move) for move in moves))
     moves = set(str(move) for move in moves)
     assert moves == moves_ref

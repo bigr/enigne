@@ -35,8 +35,9 @@ def _pawn_moves(board: Board, square: Square) -> Iterable[Move]:
         end = board.enpassant
         for df in {-1, 1}:
             start = end + (df, -ahead)
-            if board.own_pieces(start, Board.PAWN) is not None:
+            if start == square:
                 yield Move(start, end)
+                break
 
 
 def _leaper_moves(board: Board, square: Square, m: int, n: int) -> Iterable[Move]:
