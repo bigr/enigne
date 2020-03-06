@@ -1,12 +1,15 @@
+import pytest
+
 from enigne.board import Board
 from enigne.move_gen import move_gen
 
+from tests.conftest import basic_fens
 
-def test_move_gen(basic_fens):
-    for fen, _, moves_ref, *_ in basic_fens:
-        if moves_ref is None:
-            continue
 
-        board = Board(fen)
-        moves = set(str(move) for move in move_gen(board))
-        assert moves == moves_ref
+@pytest.mark.parametrize("basic_fen", [f for f in basic_fens() if f[2] is not None])
+def test_move_gen(basic_fen):
+    fen, _, moves_ref, *_ = basic_fen
+    board = Board(fen)
+    moves = list(move_gen(board))
+    moves = set(str(move) for move in moves)
+    assert moves == moves_ref

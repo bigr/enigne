@@ -1,4 +1,7 @@
+import pytest
+
 from enigne.board import Board, Square, File, Rank, Move
+from tests.conftest import basic_fens
 
 
 def test_square_eq():
@@ -51,9 +54,10 @@ def test_move_from_str():
     assert str(Move.from_str('b2a1q')) == 'b2a1q'
 
 
-def test_fen(basic_fens):
-    for fen, *_ in basic_fens:
-        assert Board(fen).fen() == fen
+@pytest.mark.parametrize("basic_fen", basic_fens())
+def test_fen(basic_fen):
+    fen, *_ = basic_fen
+    assert Board(fen).fen() == fen
 
 
 def test_board_set_get():
@@ -68,8 +72,8 @@ def test_board_set_get():
     assert board.fen() == Board().fen()
 
 
-def test_board_pieces(basic_fens):
-    board = Board(basic_fens[0][0])
+def test_board_pieces(initial_position_fen):
+    board = Board(initial_position_fen)
     assert board.own_pieces(Square.from_str('e2')) == Board.PAWN
     assert board.own_pieces(Square.from_str('e1')) == Board.KING
     assert board.own_pieces(Square.from_str('e1'), Board.KING) == Board.KING
@@ -88,36 +92,47 @@ def test_board_pieces(basic_fens):
     assert board.opponent_pieces(Square.from_str('e5')) is None
 
 
-def test_board_iter_pieces(basic_fens):
-    for fen, *_ in basic_fens:
-        board = Board(fen)
-        ret = set(board.iter_pieces(Board.WHITE))
-        ref = set(
-            (Square(File(f), Rank(r)), board[Square(File(f), Rank(r))][0])
-            for f in range(8) for r in range(8)
-            if board[Square(File(f), Rank(r))] is not None and board[Square(File(f), Rank(r))][1] == Board.WHITE
-        )
-        assert ret == ref
+@pytest.mark.parametrize("basic_fen", basic_fens())
+def test_board_iter_pieces(basic_fen):
+    fen, *_ = basic_fen
+    board = Board(fen)
+    ret = set(board.iter_pieces(Board.WHITE))
+    ref = set(
+        (Square(File(f), Rank(r)), board[Square(File(f), Rank(r))][0])
+        for f in range(8) for r in range(8)
+        if board[Square(File(f), Rank(r))] is not None and board[Square(File(f), Rank(r))][1] == Board.WHITE
+    )
+    assert ret == ref
 
 
-def test_board_move(basic_fens):
-    for (start_fen, mv, *_), (end_fen, *_) in zip(basic_fens[:-1], basic_fens[1:]):
-        if mv:
-            board = Board(start_fen)
-            board.move(Move.from_str(mv))
-            assert board.fen() == Board(end_fen).fen()
+@pytest.mark.parametrize(
+    "start, end",
+    [(start, end) for start, end in zip(basic_fens()[:-1], basic_fens()[1:]) if start[1] is not None]
+)
+def test_board_move(start, end):
+    (start_fen, mv, *_), (end_fen, *_) = start, end
+    board = Board(start_fen)
+    board.move(Move.from_str(mv))
+    assert board.fen() == Board(end_fen).fen()
 
 
-def test_board_undo_move(basic_fens):
-    for (fen1, mv1, *_), (fen2, mv2, *_), (fen3, *_) in zip(basic_fens[:-2], basic_fens[1:-1], basic_fens[2:]):
-        if mv1:
-            board = Board(fen1)
-            origin_fen = board.fen()
+@pytest.mark.parametrize(
+    "start, end1, end2",
+    [
+        (start, end1, end2)
+        for start, end1, end2 in zip(basic_fens()[:-2], basic_fens()[1:-1], basic_fens()[2:])
+        if start[1] is not None
+    ]
+)
+def test_board_undo_move(start, end1, end2):
+    (fen1, mv1, *_), (fen2, mv2, *_), (fen3, *_) = start, end1, end2
+    board = Board(fen1)
+    origin_fen = board.fen()
 
-            with board.do_move(Move.from_str(mv1)):
-                assert board.fen() == Board(fen2).fen()
-                if mv2:
-                    with board.do_move(Move.from_str(mv2)):
-                        assert board.fen() == Board(fen3).fen()
+    with board.do_move(Move.from_str(mv1)):
+        assert board.fen() == Board(fen2).fen()
+        if mv2:
+            with board.do_move(Move.from_str(mv2)):
+                assert board.fen() == Board(fen3).fen()
 
-            assert board.fen() == origin_fen
+    assert board.fen() == origin_fen
