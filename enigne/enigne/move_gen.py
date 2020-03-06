@@ -1,6 +1,6 @@
 from typing import Iterable, Optional
 
-from .board import Board, Move, Rank, Square, Color
+from .board import Board, Move, Rank, Square, Color, File
 
 
 def _pawn_moves(board: Board, square: Square, color: Color) -> Iterable[Move]:
@@ -127,3 +127,19 @@ def is_attacked(board: Board, square: Square, color: Optional[Color]) -> bool:
 
 def in_check(board: Board):
     return is_attacked(board, board.own_king_square, board.opponent)
+
+
+def legal_move_gen(board: Board) -> Iterable[Move]:
+    for move in move_gen(board):
+        piece = board.own_pieces(move.start)
+        with board.do_move(move):
+            # King can not be attacked
+            legal = not is_attacked(board, board.opponent_king_square, board.turn)
+            # Castling attack rules
+            if legal and piece == board.KING and abs(move.start.file - move.end.file) == 2:
+                for f in (range(2, 5) if move.end.file == 2 else range(4, 7)):
+                    if is_attacked(board, Square(File(f), move.start.rank), board.turn):
+                        legal = False
+                        break
+        if legal:
+            yield move
