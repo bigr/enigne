@@ -77,6 +77,9 @@ class Move:
     def promote(self) -> Optional[Piece]:
         return self._promote
 
+    def __hash__(self):
+        return hash(self.start) | hash(self.end) << 6 | int(self.promote if self.promote is not None else 0) << 12
+
     def __init__(self, start: Square, end: Square, promote: Optional[Piece] = None):
         self._start = start
         self._end = end
