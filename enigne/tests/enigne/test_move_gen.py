@@ -25,17 +25,27 @@ def test_attackers():
     assert not is_attacked(board, Square.from_str('a1'), Board.WHITE)
 
 
-@pytest.mark.parametrize("perft_data", perfts())
-def test_perft(perft_data):
+def _run_perft(perft_data, full=False):
     fen, node_counts, max_depth, divide_expected = perft_data
     board = Board(fen)
     for depth, nodes_expected in enumerate(node_counts, 1):
-        if depth > max_depth:
+        if not full and depth > max_depth:
             break
         nodes, divide = perft(board, depth, divide=True)
         divide = {str(mv): count for mv, count in divide.items()}
-        if divide_expected is None or depth < max_depth:
+        if divide_expected is None or depth < max_depth or depth > 2:
             assert nodes == nodes_expected, str(set(divide.keys()))
         else:
             assert divide == divide_expected
             assert nodes == nodes_expected
+
+
+@pytest.mark.parametrize("perft_data", perfts())
+def test_perft(perft_data):
+    _run_perft(perft_data)
+
+
+@pytest.mark.integtest
+@pytest.mark.parametrize("perft_data", perfts())
+def test_integration_perft(perft_data):
+    _run_perft(perft_data, full=True)
