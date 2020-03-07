@@ -35,8 +35,9 @@ def _pawn_moves(board: Board, square: Square) -> Iterable[Move]:
         end = board.enpassant
         for df in {-1, 1}:
             start = end + (df, -ahead)
-            if board.own_pieces(start, Board.PAWN) is not None:
+            if start == square:
                 yield Move(start, end)
+                break
 
 
 def _leaper_moves(board: Board, square: Square, m: int, n: int) -> Iterable[Move]:
@@ -78,7 +79,7 @@ def move_gen(board: Board) -> Iterable[Move]:
                     board[square + (-1, 0)] is None and board[square + (-2, 0)] is None \
                     and board[square + (-3, 0)] is None:
 
-                yield Move(square, square + (-3, 0))
+                yield Move(square, square + (-2, 0))
 
         elif piece == Board.KNIGHT:
             yield from (

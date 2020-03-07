@@ -2,6 +2,10 @@ import pytest
 
 
 @pytest.fixture
+def initial_position_fen():
+    return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+
+
 def basic_fens():
     return [
         # Initial position
@@ -98,6 +102,7 @@ def basic_fens():
         ('8/8/8/3pP3/3Pp3/8/8/8 w - - 0 1', None, {'e5e6'}),
         ('8/8/8/3pP3/3Pp3/8/8/8 b - - 0 1', None, {'e4e3'}),
         ('8/8/8/4Pp2/8/8/8/8 w - f6 0 1', None, {'e5e6', 'e5f6'}),
+        ('8/8/6P1/2P1PpP1/8/4P3/8/8 w - f6 0 1', None, {'e5e6', 'e5f6', 'g5f6', 'c5c6', 'e3e4', 'g6g7'}),
         ('8/8/8/8/4Pp2/8/8/8 b - e3 0 1', None, {'f4f3', 'f4e3'}),
         ('8/8/8/4Pp2/8/8/8/8 w - - 0 1', None, {'e5e6'}),
         ('8/8/8/8/4Pp2/8/8/8 b - - 0 1', None, {'f4f3'}),
@@ -305,7 +310,7 @@ def basic_fens():
             'a1a2', 'a1a3', 'a1a4', 'a1a5', 'a1a6', 'a1a7', 'a1a8'
         }),
         ('8/8/8/8/8/8/8/R3K3 w Q - 0 1', None, {
-            'e1b1',
+            'e1c1',
             'e1d1', 'e1d2', 'e1e2', 'e1f1', 'e1f2',
             'a1b1', 'a1c1', 'a1d1',
             'a1a2', 'a1a3', 'a1a4', 'a1a5', 'a1a6', 'a1a7', 'a1a8'
@@ -337,7 +342,7 @@ def basic_fens():
             'a8a7', 'a8a6', 'a8a5', 'a8a4', 'a8a3', 'a8a2', 'a8a1'
         }),
         ('r3k3/8/8/8/8/8/8/8 b q - 0 1', None, {
-            'e8b8',
+            'e8c8',
             'e8d8', 'e8d7', 'e8e7', 'e8f8', 'e8f7',
             'a8b8', 'a8c8', 'a8d8',
             'a8a7', 'a8a6', 'a8a5', 'a8a4', 'a8a3', 'a8a2', 'a8a1'
