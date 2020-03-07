@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+import argparse
+import time
+
+from enigne.board import Board
+from enigne.perft import perft
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Calculates perft.')
+    parser.add_argument('fen')
+    parser.add_argument('depth', type=int)
+    args = parser.parse_args()
+
+    board = Board(args.fen)
+
+    start = time.perf_counter()
+    nodes = perft(board, args.depth, False)
+    duration = time.perf_counter() - start
+
+    print(f"Perft: {nodes}, takes {duration:.2}s, {int(nodes/duration)} nodes per second")
+
+
+if __name__ == "__main__":
+    main()
