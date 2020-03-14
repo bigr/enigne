@@ -11,6 +11,6 @@ setup(
     version=about['__version__'],
     author=about['__author__'],
     packages=find_packages(),
-    scripts=['bin/enigne-perft'],
+    scripts=['bin/enigne-perft', 'bin/enigne'],
     tests_require=['pytest', 'pytest-console-scripts'],
 )
