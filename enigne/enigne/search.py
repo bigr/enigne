@@ -60,6 +60,38 @@ class SearchVisitor:
         self.end()
 
 
+class PVSearchVisitor(SearchVisitor):
+    """Search visitor logging principal variation"""
+
+    _current_move: Optional[Move]
+    _best_move: Optional[Move]
+    _pv: List[Move]
+
+    def __init__(self, parent: Optional[SearchVisitor] = None):
+        super().__init__(parent=parent)
+        self._current_move = None
+        self._best_move = None
+        self._pv = []
+
+    @property
+    def best_move(self) -> Optional[Move]:
+        return self._best_move
+
+    @property
+    def pv(self) -> Optional[List[Move]]:
+        return self._pv
+
+    def current_move(self, move: Move) -> None:
+        self._current_move = move
+
+    def new_best_move(self, score: float, is_principal_variation=False) -> None:
+        self._best_move = self._current_move
+        if is_principal_variation:
+            self._pv = [self._best_move] + (self._child.pv if self._child else [])
+            if self.parent:
+                self.parent.new_best_move(-score, is_principal_variation=True)
+
+
 def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
                      beta: float = math.inf, visitor: SearchVisitor = SearchVisitor()) -> Tuple[float, List[Move]]:
     """Negamax implementation of alpha-beta pruning."""
