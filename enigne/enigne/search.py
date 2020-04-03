@@ -61,25 +61,34 @@ class SearchVisitor:
 
 
 def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
-                     beta: float = math.inf) -> Tuple[float, List[Move]]:
+                     beta: float = math.inf, visitor: SearchVisitor = SearchVisitor()) -> Tuple[float, List[Move]]:
     """Negamax implementation of alpha-beta pruning."""
-    if depth == 0:
-        return evaluate_material(board), []
+    with visitor:
+        if depth == 0:
+            return evaluate_material(board), []
 
-    pv = []
-    mate = True
-    for move in legal_move_gen(board):
-        mate = False
-        with board.do_move(move):
-            score, sub_pv = alphabeta_search(board, depth - 1, -beta, -alpha)
-        score *= -1
-        if score >= beta and score != math.inf:
-            return beta, pv
-        if score > alpha:
-            alpha = score
-            pv = [move] + sub_pv
+        pv = []
+        mate = True
+        for move in legal_move_gen(board):
+            visitor.current_move(move)
+            mate = False
+            with board.do_move(move), visitor.child() as child_visitor:
+                score, sub_pv = alphabeta_search(board, depth - 1, -beta, -alpha, child_visitor)
+            score *= -1
+            if score >= beta and score != math.inf:
+                visitor.new_best_move(score)
+                return beta, pv
+            if score > alpha:
+                visitor.new_best_move(score, is_principal_variation=True)
+                alpha = score
+                pv = [move] + sub_pv
 
-    if mate:
-        return (-MATE_SCORE if in_check(board) else 0), []
+        if mate:
+            if in_check(board):
+                visitor.mated()
+                return -MATE_SCORE, []
+            else:
+                visitor.stalemated()
+                return 0, []
 
-    return alpha, pv
+        return alpha, pv
