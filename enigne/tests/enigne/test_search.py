@@ -36,16 +36,14 @@ def test_pv_search_visitor():
 ])
 def test_alphabeta_search(fen, depth, expected_score, pvs):
     board = Board(fen)
-    score, pv = alphabeta_search(board, depth)
+    score = alphabeta_search(board, depth)
     assert score == expected_score
-    assert len(pv) <= depth
-
-    assert " ".join(str(mv) for mv in pv) in pvs
-
-    for i, move in enumerate(pv, 1):
-        board.move(move)
-        score, _ = alphabeta_search(board, depth - i)
-        assert score == expected_score * (-1 if i % 2 else 1)
+    for pv in list(pvs)[:1]:
+        pv = [Move.from_str(mv) for mv in pv.split()]
+        for i, move in enumerate(pv, 1):
+            board.move(move)
+            score = alphabeta_search(board, depth - i)
+            assert score == expected_score * (-1 if i % 2 else 1)
 
 
 @pytest.mark.parametrize('fen, depth, expected_score, pvs', [
@@ -57,7 +55,7 @@ def test_alphabeta_search(fen, depth, expected_score, pvs):
 def test_pv_search_visitor_in_alphabeta_search(fen, depth, expected_score, pvs):
     board = Board(fen)
     visitor = PVSearchVisitor()
-    _, pv = alphabeta_search(board, depth, visitor=visitor)
+    alphabeta_search(board, depth, visitor=visitor)
     assert " ".join(str(mv) for mv in visitor.pv) in pvs
 
 
