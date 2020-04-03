@@ -1,7 +1,13 @@
 import pytest
 
 from enigne.board import Board
-from enigne.search import alphabeta_search, MATE_SCORE
+from enigne.search import alphabeta_search, MATE_SCORE, SearchVisitor
+
+
+def test_search_visitor():
+    visitor = SearchVisitor()
+    with visitor.child() as child_visitor:
+        assert child_visitor.parent == visitor
 
 
 @pytest.mark.parametrize('fen, depth, expected_score, pvs', [
