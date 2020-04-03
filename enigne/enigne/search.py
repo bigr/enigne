@@ -16,7 +16,6 @@ def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
 
     pv = []
     mate = True
-    score_mx = -math.inf
     for move in legal_move_gen(board):
         mate = False
         with board.do_move(move):
