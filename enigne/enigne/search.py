@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import time
 from typing import Tuple, List, Optional, Iterator, Dict, Any
 from contextlib import contextmanager
 
@@ -90,6 +91,47 @@ class PVSearchVisitor(SearchVisitor):
             self._pv = [self._best_move] + (self._child.pv if self._child else [])
             if self.parent:
                 self.parent.new_best_move(-score, is_principal_variation=True)
+
+
+class StatsSearchVisitor(SearchVisitor):
+    _nodes: int
+    _start_clock: Optional[float]
+    _end_clock: Optional[float]
+
+    def __init__(self, parent: Optional[SearchVisitor] = None):
+        super().__init__(parent=parent)
+        self._nodes = 0
+        self._start_clock = None
+        self._end_clock = None
+        self._pv = []
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    @property
+    def duration(self) -> Optional[float]:
+        if not self._start_clock:
+            return None
+        elif not self._end_clock:
+            return time.perf_counter() - self._start_clock
+        else:
+            return self._end_clock - self._start_clock
+
+    def current_move(self, move: Move) -> None:
+        self._inc_nodes()
+
+    def _inc_nodes(self):
+        if self.parent:
+            self.parent._inc_nodes()
+        else:
+            self._nodes += 1
+
+    def start(self):
+        self._start_clock = time.perf_counter()
+
+    def end(self):
+        self._end_clock = time.perf_counter()
 
 
 def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,

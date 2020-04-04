@@ -1,7 +1,9 @@
+import time
+
 import pytest
 
 from enigne.board import Board, Move
-from enigne.search import alphabeta_search, MATE_SCORE, SearchVisitor, PVSearchVisitor
+from enigne.search import alphabeta_search, MATE_SCORE, SearchVisitor, PVSearchVisitor, StatsSearchVisitor
 
 
 def test_search_visitor():
@@ -26,6 +28,27 @@ def test_pv_search_visitor():
         child_visitor.current_move(Move.from_str('f7f5'))
     assert str(visitor.best_move) == 'f2f4'
     assert " ".join([str(mv) for mv in visitor.pv]) == 'f2f4 e7e5'
+
+
+def test_stats_search_visitor():
+    visitor = StatsSearchVisitor()
+    time.sleep(0.01)
+    with visitor:
+        visitor.current_move(Move.from_str('e2e3'))
+        time.sleep(0.005)
+        visitor.current_move(Move.from_str('e2e4'))
+        with visitor.child() as child_visitor:
+            with child_visitor:
+                child_visitor.current_move(Move.from_str('e7e5'))
+                child_visitor.current_move(Move.from_str('e7e6'))
+                time.sleep(0.005)
+                child_visitor.new_best_move(0, is_principal_variation=True)
+        visitor.new_best_move(0, is_principal_variation=True)
+        time.sleep(0.005)
+        visitor.current_move(Move.from_str('f2f4'))
+    time.sleep(0.01)
+    assert 0.015 <= visitor.duration < 0.0175
+    assert visitor.nodes == 5
 
 
 @pytest.mark.parametrize('fen, depth, expected_score, pvs', [
