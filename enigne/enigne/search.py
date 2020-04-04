@@ -134,6 +134,58 @@ class StatsSearchVisitor(SearchVisitor):
         self._end_clock = time.perf_counter()
 
 
+class BagOfSearchVisitors(SearchVisitor):
+    _visitors: Dict[str, SearchVisitor]
+
+    def __init__(self, visitors: Dict[str, SearchVisitor], parent: Optional[str, SearchVisitor] = None, **kwargs):
+        super().__init__(visitors, parent=parent, **kwargs)
+        if parent is None:
+            self._visitors = visitors
+        else:
+            self._visitors = {
+                name: visitor.__class__(*visitor._init_args, parent=visitor, **visitor._init_kwargs)
+                for name, visitor in visitors.items()
+            }
+            for name, visitor in visitors.items():
+                visitor._child = self._visitors[name]
+
+    @property
+    def visitors(self) -> Dict[str, SearchVisitor]:
+        return self._visitors
+
+    @contextmanager
+    def child(self) -> Iterator[SearchVisitor]:
+        self._child = self.__class__(*self._init_args, parent=self, **self._init_kwargs)
+        try:
+            yield self._child
+        finally:
+            pass
+
+    def start(self):
+        for visitor in self.visitors.values():
+            visitor.start()
+
+    def end(self):
+        for visitor in self.visitors.values():
+            visitor.end()
+
+    def new_best_move(self, score: float, is_principal_variation=False) -> None:
+        for visitor in self.visitors.values():
+            visitor.new_best_move(score, is_principal_variation=is_principal_variation)
+
+    def current_move(self, move: Move) -> None:
+        for visitor in self.visitors.values():
+            visitor.current_move(move)
+
+    def mated(self) -> None:
+        for visitor in self.visitors.values():
+            visitor.mated()
+
+    def stalemated(self) -> None:
+        for visitor in self.visitors.values():
+            visitor.stalemated()
+
+
 def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
                      beta: float = math.inf, visitor: SearchVisitor = SearchVisitor()) -> float:
     """Negamax implementation of alpha-beta pruning."""
