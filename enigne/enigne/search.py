@@ -13,6 +13,7 @@ MATE_SCORE = 32767
 
 
 class SearchVisitor:
+    """Search visitors make possible monitor and affect search algorithm. Their are organized to tree structure"""
     _parent: Optional[SearchVisitor]
     _child: Optional[SearchVisitor]
     _init_kwargs: Dict[Any]
@@ -43,21 +44,31 @@ class SearchVisitor:
         return False
 
     def start(self):
+        """Called before beginning of the search"""
         pass
 
     def end(self):
+        """Called when search is finished"""
         pass
 
     def new_best_move(self, score: float, is_principal_variation=False) -> None:
+        """
+        Called when move with best score is found. Best move is can be taken from the last call of the `current_move`.
+        :param score: Score of the move
+        :param is_principal_variation: If `True` this move is part of principal variation
+        """
         pass
 
     def current_move(self, move: Move) -> None:
+        """Called when search of given `move` has been started."""
         pass
 
     def mated(self) -> None:
+        """Called when mate has been found"""
         pass
 
     def stalemated(self) -> None:
+        """Called when stalemate has been found"""
         pass
 
     def __enter__(self):
