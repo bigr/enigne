@@ -1,10 +1,29 @@
 import time
+from typing import Optional
 
 import pytest
+from pytest import fixture
 
 from enigne.board import Board, Move
 from enigne.search import alphabeta_search, MATE_SCORE, SearchVisitor, PVSearchVisitor, StatsSearchVisitor, \
     BagOfSearchVisitors
+
+
+class HaltVisitor(SearchVisitor):
+
+    def __init__(self, parent: Optional[SearchVisitor] = None):
+        super().__init__(parent=parent)
+        self._start_clock = None
+
+    @property
+    def halt(self):
+        if self.parent:
+            return self.parent.halt
+
+        return time.perf_counter() - self._start_clock > 0.1
+
+    def start(self):
+        self._start_clock = time.perf_counter()
 
 
 def test_search_visitor():
@@ -78,6 +97,29 @@ def test_bag_of_search_visitors():
     assert visitor.visitors['stats'].nodes == 6
 
 
+def test_halt_visitor():
+    visitor = BagOfSearchVisitors({
+        'halt': HaltVisitor(),
+        'stats': StatsSearchVisitor()
+    })
+    with visitor:
+        assert not visitor.halt
+        visitor.current_move(Move.from_str('e2e3'))
+        time.sleep(0.04)
+        visitor.current_move(Move.from_str('e2e4'))
+        assert not visitor.halt
+        with visitor.child() as child_visitor:
+            with child_visitor:
+                assert not child_visitor.halt
+                child_visitor.current_move(Move.from_str('e7e5'))
+                time.sleep(0.04)
+                assert not child_visitor.halt
+                child_visitor.current_move(Move.from_str('e7e6'))
+                time.sleep(0.03)
+                assert child_visitor.halt
+            assert visitor.halt
+
+
 @pytest.mark.parametrize('fen, depth, expected_score, pvs', [
     ('7k/8/8/8/3r4/8/2r5/K7 b - - 0 1', 2, MATE_SCORE, {'d4d1'}),
     ('7k/8/8/8/3r4/8/4r3/K7 w - - 0 1', 3, -MATE_SCORE, {'a1b1 d4d1'}),
@@ -109,4 +151,15 @@ def test_pv_search_visitor_in_alphabeta_search(fen, depth, expected_score, pvs):
     assert " ".join(str(mv) for mv in visitor.pv) in pvs
 
 
+def test_halt_search_visitor_in_alphabeta_search():
+    board = Board('7k/4Q3/8/6K1/8/8/8/8 w - - 0 1')
+    visitor = BagOfSearchVisitors({
+        'halt': HaltVisitor(),
+        'stats': StatsSearchVisitor()
+    })
+    start = time.perf_counter()
+    alphabeta_search(board, 6, visitor=visitor)
+    duration = time.perf_counter() - start
+
+    assert 0.1 <= duration < 0.11
 

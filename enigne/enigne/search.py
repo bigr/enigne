@@ -17,6 +17,7 @@ class SearchVisitor:
     _child: Optional[SearchVisitor]
     _init_kwargs: Dict[Any]
     _init_args: Tuple[Any]
+    _halt: bool
 
     def __init__(self, *args, parent: Optional[SearchVisitor] = None, **kwargs):
         self._parent = parent
@@ -35,6 +36,11 @@ class SearchVisitor:
             yield self._child
         finally:
             pass
+
+    @property
+    def halt(self):
+        """If this method returns `true` search is stopped immediately."""
+        return False
 
     def start(self):
         pass
@@ -161,6 +167,10 @@ class BagOfSearchVisitors(SearchVisitor):
         finally:
             pass
 
+    @property
+    def halt(self):
+        return any(visitor.halt for visitor in self.visitors.values())
+
     def start(self):
         for visitor in self.visitors.values():
             visitor.start()
@@ -206,6 +216,8 @@ def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
             if score > alpha:
                 visitor.new_best_move(score, is_principal_variation=True)
                 alpha = score
+            if visitor.halt:
+                return score
 
         if mate:
             if in_check(board):
