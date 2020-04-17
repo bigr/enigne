@@ -76,3 +76,15 @@ class EngineBase(ABC):
     @abstractmethod
     def quit(self):
         pass
+
+
+class EngineHaltSearchVisitor(SearchVisitor):
+    _engine: EngineBase
+
+    def __init__(self, engine: EngineBase, parent: Optional[SearchVisitor] = None):
+        super().__init__(engine, parent=parent)
+        self._engine = engine
+
+    @property
+    def halt(self) -> bool:
+        return self._engine.is_search_terminating
