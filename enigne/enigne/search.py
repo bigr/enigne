@@ -159,14 +159,6 @@ class BagOfSearchVisitors(SearchVisitor):
     def visitors(self) -> Dict[str, SearchVisitor]:
         return self._visitors
 
-    @contextmanager
-    def child(self) -> Iterator[SearchVisitor]:
-        self._child = self.__class__(*self._init_args, parent=self, **self._init_kwargs)
-        try:
-            yield self._child
-        finally:
-            pass
-
     @property
     def halt(self):
         return any(visitor.halt for visitor in self.visitors.values())
