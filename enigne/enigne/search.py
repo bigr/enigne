@@ -13,10 +13,12 @@ MATE_SCORE = 32767
 
 
 class SearchVisitor:
+    """Search visitors make possible monitor and affect search algorithm. Their are organized to tree structure"""
     _parent: Optional[SearchVisitor]
     _child: Optional[SearchVisitor]
     _init_kwargs: Dict[Any]
     _init_args: Tuple[Any]
+    _halt: bool
 
     def __init__(self, *args, parent: Optional[SearchVisitor] = None, **kwargs):
         self._parent = parent
@@ -36,22 +38,37 @@ class SearchVisitor:
         finally:
             pass
 
+    @property
+    def halt(self):
+        """If this method returns `true` search is stopped immediately."""
+        return False
+
     def start(self):
+        """Called before beginning of the search"""
         pass
 
     def end(self):
+        """Called when search is finished"""
         pass
 
     def new_best_move(self, score: float, is_principal_variation=False) -> None:
+        """
+        Called when move with best score is found. Best move is can be taken from the last call of the `current_move`.
+        :param score: Score of the move
+        :param is_principal_variation: If `True` this move is part of principal variation
+        """
         pass
 
     def current_move(self, move: Move) -> None:
+        """Called when search of given `move` has been started."""
         pass
 
     def mated(self) -> None:
+        """Called when mate has been found"""
         pass
 
     def stalemated(self) -> None:
+        """Called when stalemate has been found"""
         pass
 
     def __enter__(self):
@@ -153,13 +170,9 @@ class BagOfSearchVisitors(SearchVisitor):
     def visitors(self) -> Dict[str, SearchVisitor]:
         return self._visitors
 
-    @contextmanager
-    def child(self) -> Iterator[SearchVisitor]:
-        self._child = self.__class__(*self._init_args, parent=self, **self._init_kwargs)
-        try:
-            yield self._child
-        finally:
-            pass
+    @property
+    def halt(self):
+        return any(visitor.halt for visitor in self.visitors.values())
 
     def start(self):
         for visitor in self.visitors.values():
@@ -206,6 +219,8 @@ def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
             if score > alpha:
                 visitor.new_best_move(score, is_principal_variation=True)
                 alpha = score
+            if visitor.halt:
+                return score
 
         if mate:
             if in_check(board):
