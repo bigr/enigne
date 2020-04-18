@@ -71,6 +71,10 @@ class SearchVisitor:
         """Called when stalemate has been found"""
         pass
 
+    def skip(self, move: Move) -> bool:
+        """Skip searching of current move"""
+        return False
+
     def __enter__(self):
         self.start()
 
@@ -198,6 +202,9 @@ class BagOfSearchVisitors(SearchVisitor):
         for visitor in self.visitors.values():
             visitor.stalemated()
 
+    def skip(self, move: Move) -> bool:
+        return any(visitor.skip(move) for visitor in self.visitors.values())
+
 
 def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
                      beta: float = math.inf, visitor: SearchVisitor = SearchVisitor()) -> float:
@@ -208,7 +215,11 @@ def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
 
         mate = True
         for move in legal_move_gen(board):
+            if visitor.skip(move):
+                continue
+
             visitor.current_move(move)
+
             mate = False
             with board.do_move(move), visitor.child() as child_visitor:
                 score = alphabeta_search(board, depth - 1, -beta, -alpha, child_visitor)
