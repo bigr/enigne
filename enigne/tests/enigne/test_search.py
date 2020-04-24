@@ -2,7 +2,6 @@ import time
 from typing import Optional
 
 import pytest
-from pytest import fixture
 
 from enigne.board import Board, Move
 from enigne.search import alphabeta_search, MATE_SCORE, SearchVisitor, PVSearchVisitor, StatsSearchVisitor, \
