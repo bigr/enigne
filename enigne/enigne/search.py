@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import time
-from typing import Tuple, List, Optional, Iterator, Dict, Any
+from typing import Tuple, List, Optional, Iterator, Dict, Any, Container
 from contextlib import contextmanager
 
 from enigne.board import Board, Move
@@ -80,6 +80,22 @@ class SearchVisitor:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end()
+
+
+class FilterMovesSearchVisitor(SearchVisitor):
+    """White lists moves to search (in root depth)"""
+
+    _moves: Container[Move]
+
+    def __init__(self, moves: Container[Move], parent: Optional[SearchVisitor] = None):
+        super().__init__(moves, parent=parent)
+        self._moves = moves
+
+    def skip(self, move: Move) -> bool:
+        if self._parent:
+            return False
+
+        return move not in self._moves
 
 
 class PVSearchVisitor(SearchVisitor):
