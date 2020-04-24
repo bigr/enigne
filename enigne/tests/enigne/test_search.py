@@ -2,11 +2,10 @@ import time
 from typing import Optional
 
 import pytest
-from pytest import fixture
 
 from enigne.board import Board, Move
 from enigne.search import alphabeta_search, MATE_SCORE, SearchVisitor, PVSearchVisitor, StatsSearchVisitor, \
-    BagOfSearchVisitors
+    BagOfSearchVisitors, FilterMovesSearchVisitor
 
 
 class HaltVisitor(SearchVisitor):
@@ -120,6 +119,23 @@ def test_halt_visitor():
             assert visitor.halt
 
 
+def test_skip_visitor():
+    visitor = BagOfSearchVisitors({
+        'halt': FilterMovesSearchVisitor([Move.from_str('e2e4'), Move.from_str('e2e3')]),
+        'pv': PVSearchVisitor()
+    })
+    with visitor:
+        assert visitor.skip(Move.from_str('f2f3'))
+        assert not visitor.skip(Move.from_str('e2e3'))
+        visitor.current_move(Move.from_str('e2e3'))
+        with visitor.child() as child_visitor:
+            with child_visitor:
+                assert not child_visitor.skip(Move.from_str('f2f3'))
+                assert not child_visitor.skip(Move.from_str('e2e3'))
+        assert visitor.skip(Move.from_str('f2f4'))
+        assert not visitor.skip(Move.from_str('e2e4'))
+
+
 @pytest.mark.parametrize('fen, depth, expected_score, pvs', [
     ('7k/8/8/8/3r4/8/2r5/K7 b - - 0 1', 2, MATE_SCORE, {'d4d1'}),
     ('7k/8/8/8/3r4/8/4r3/K7 w - - 0 1', 3, -MATE_SCORE, {'a1b1 d4d1'}),
@@ -162,4 +178,16 @@ def test_halt_search_visitor_in_alphabeta_search():
     duration = time.perf_counter() - start
 
     assert 0.1 <= duration < 0.11
+
+
+@pytest.mark.parametrize('move', ['h2h3', 'b2b4'])
+def test_filter_moves_search_visitor_in_alphabeta_search(move, initial_position_fen):
+    board = Board(initial_position_fen)
+    visitor = BagOfSearchVisitors({
+        'halt': FilterMovesSearchVisitor([Move.from_str(move)]),
+        'pv': PVSearchVisitor()
+    })
+    alphabeta_search(board, 2, visitor=visitor)
+
+    assert str(visitor.visitors['pv'].best_move) == move
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import time
-from typing import Tuple, List, Optional, Iterator, Dict, Any
+from typing import Tuple, List, Optional, Iterator, Dict, Any, Container
 from contextlib import contextmanager
 
 from enigne.board import Board, Move
@@ -71,11 +71,31 @@ class SearchVisitor:
         """Called when stalemate has been found"""
         pass
 
+    def skip(self, move: Move) -> bool:
+        """Skip searching of current move"""
+        return False
+
     def __enter__(self):
         self.start()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end()
+
+
+class FilterMovesSearchVisitor(SearchVisitor):
+    """White lists moves to search (in root depth)"""
+
+    _moves: Container[Move]
+
+    def __init__(self, moves: Container[Move], parent: Optional[SearchVisitor] = None):
+        super().__init__(moves, parent=parent)
+        self._moves = moves
+
+    def skip(self, move: Move) -> bool:
+        if self._parent:
+            return False
+
+        return move not in self._moves
 
 
 class PVSearchVisitor(SearchVisitor):
@@ -198,6 +218,9 @@ class BagOfSearchVisitors(SearchVisitor):
         for visitor in self.visitors.values():
             visitor.stalemated()
 
+    def skip(self, move: Move) -> bool:
+        return any(visitor.skip(move) for visitor in self.visitors.values())
+
 
 def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
                      beta: float = math.inf, visitor: SearchVisitor = SearchVisitor()) -> float:
@@ -208,7 +231,11 @@ def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
 
         mate = True
         for move in legal_move_gen(board):
+            if visitor.skip(move):
+                continue
+
             visitor.current_move(move)
+
             mate = False
             with board.do_move(move), visitor.child() as child_visitor:
                 score = alphabeta_search(board, depth - 1, -beta, -alpha, child_visitor)
