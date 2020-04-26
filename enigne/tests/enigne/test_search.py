@@ -70,10 +70,9 @@ def test_stats_search_visitor():
 
 
 def test_bag_of_search_visitors():
-    visitor = BagOfSearchVisitors({
-        'pv': PVSearchVisitor(),
-        'stats': StatsSearchVisitor()
-    })
+    pv = PVSearchVisitor()
+    stats = StatsSearchVisitor()
+    visitor = BagOfSearchVisitors({'pv': pv, 'stats': stats})
     with visitor:
         visitor.current_move(Move.from_str('e2e3'))
         time.sleep(0.005)
@@ -90,10 +89,10 @@ def test_bag_of_search_visitors():
         time.sleep(0.005)
         visitor.current_move(Move.from_str('f2f4'))
     time.sleep(0.01)
-    assert str(visitor.visitors['pv'].best_move) == 'e2e4'
-    assert " ".join([str(mv) for mv in visitor.visitors['pv'].pv]) == 'e2e4 e7e6'
-    assert 0.015 <= visitor.visitors['stats'].duration < 0.0175
-    assert visitor.visitors['stats'].nodes == 6
+    assert str(pv.best_move) == 'e2e4'
+    assert " ".join([str(mv) for mv in pv.pv]) == 'e2e4 e7e6'
+    assert 0.015 <= stats.duration < 0.0175
+    assert stats.nodes == 6
 
 
 def test_halt_visitor():
@@ -183,11 +182,9 @@ def test_halt_search_visitor_in_alphabeta_search():
 @pytest.mark.parametrize('move', ['h2h3', 'b2b4'])
 def test_filter_moves_search_visitor_in_alphabeta_search(move, initial_position_fen):
     board = Board(initial_position_fen)
-    visitor = BagOfSearchVisitors({
-        'halt': FilterMovesSearchVisitor([Move.from_str(move)]),
-        'pv': PVSearchVisitor()
-    })
+    halt = FilterMovesSearchVisitor([Move.from_str(move)])
+    pv = PVSearchVisitor()
+    visitor = BagOfSearchVisitors({'halt': halt, 'pv': pv})
     alphabeta_search(board, 2, visitor=visitor)
 
-    assert str(visitor.visitors['pv'].best_move) == move
-
+    assert str(pv.best_move) == move
