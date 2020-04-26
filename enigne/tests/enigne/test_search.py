@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 from typing import Optional
 
@@ -13,6 +15,9 @@ class HaltVisitor(SearchVisitor):
     def __init__(self, parent: Optional[SearchVisitor] = None):
         super().__init__(parent=parent)
         self._start_clock = None
+
+    def _create_child(self) -> HaltVisitor:
+        return HaltVisitor(parent=self)
 
     @property
     def halt(self):
