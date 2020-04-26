@@ -1,33 +1,12 @@
 from __future__ import annotations
 
 import time
-from typing import Optional
 
 import pytest
 
 from enigne.board import Board, Move
 from enigne.search import alphabeta_search, MATE_SCORE, SearchVisitor, PVSearchVisitor, StatsSearchVisitor, \
-    BagOfSearchVisitors, FilterMovesSearchVisitor
-
-
-class HaltVisitor(SearchVisitor):
-
-    def __init__(self, parent: Optional[SearchVisitor] = None):
-        super().__init__(parent=parent)
-        self._start_clock = None
-
-    def _create_child(self) -> HaltVisitor:
-        return HaltVisitor(parent=self)
-
-    @property
-    def halt(self):
-        if self.parent:
-            return self.parent.halt
-
-        return time.perf_counter() - self._start_clock > 0.1
-
-    def start(self):
-        self._start_clock = time.perf_counter()
+    BagOfSearchVisitors, FilterMovesSearchVisitor, TimeoutHaltSearchVisitor
 
 
 def test_search_visitor():
@@ -102,7 +81,7 @@ def test_bag_of_search_visitors():
 
 def test_halt_visitor():
     visitor = BagOfSearchVisitors({
-        'halt': HaltVisitor(),
+        'halt': TimeoutHaltSearchVisitor(timeout=0.1),
         'stats': StatsSearchVisitor()
     })
     with visitor:
@@ -174,7 +153,7 @@ def test_pv_search_visitor_in_alphabeta_search(fen, depth, expected_score, pvs):
 def test_halt_search_visitor_in_alphabeta_search():
     board = Board('7k/4Q3/8/6K1/8/8/8/8 w - - 0 1')
     visitor = BagOfSearchVisitors({
-        'halt': HaltVisitor(),
+        'halt': TimeoutHaltSearchVisitor(timeout=0.1),
         'stats': StatsSearchVisitor()
     })
     start = time.perf_counter()

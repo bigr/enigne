@@ -180,6 +180,29 @@ class StatsSearchVisitor(SearchVisitor):
         self._end_clock = time.perf_counter()
 
 
+class TimeoutHaltSearchVisitor(SearchVisitor):
+    _timeout: float
+    _child: TimeoutHaltSearchVisitor
+
+    def __init__(self, timeout: float, parent: Optional[TimeoutHaltSearchVisitor] = None):
+        super().__init__(parent=parent)
+        self._timeout = timeout
+        self._start_clock = None
+
+    def _create_child(self) -> TimeoutHaltSearchVisitor:
+        return TimeoutHaltSearchVisitor(self._timeout, parent=self)
+
+    @property
+    def halt(self):
+        if self.parent:
+            return self.parent.halt
+
+        return time.perf_counter() - self._start_clock > self._timeout
+
+    def start(self):
+        self._start_clock = time.perf_counter()
+
+
 class BagOfSearchVisitors(SearchVisitor):
     _visitors: Dict[str, SearchVisitor]
     _child: BagOfSearchVisitors
