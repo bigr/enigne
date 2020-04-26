@@ -6,7 +6,7 @@ import pytest
 
 from enigne.board import Board, Move
 from enigne.search import alphabeta_search, MATE_SCORE, SearchVisitor, PVSearchVisitor, StatsSearchVisitor, \
-    BagOfSearchVisitors, FilterMovesSearchVisitor, TimeoutHaltSearchVisitor
+    BagOfSearchVisitors, FilterMovesSearchVisitor, NodesCountHaltSearchVisitor, TimeoutHaltSearchVisitor
 
 
 def test_search_visitor():
@@ -98,6 +98,23 @@ def test_halt_visitor():
                 assert not child_visitor.halt
                 child_visitor.current_move(Move.from_str('e7e6'))
                 time.sleep(0.03)
+                assert child_visitor.halt
+            assert visitor.halt
+
+
+def test_nodes_count_halt_visitor():
+    visitor = NodesCountHaltSearchVisitor(nodes_limit=4)
+    with visitor:
+        assert not visitor.halt
+        visitor.current_move(Move.from_str('e2e3'))
+        visitor.current_move(Move.from_str('e2e4'))
+        assert not visitor.halt
+        with visitor.child() as child_visitor:
+            with child_visitor:
+                assert not child_visitor.halt
+                child_visitor.current_move(Move.from_str('e7e5'))
+                assert not child_visitor.halt
+                child_visitor.current_move(Move.from_str('e7e6'))
                 assert child_visitor.halt
             assert visitor.halt
 

@@ -203,6 +203,25 @@ class TimeoutHaltSearchVisitor(SearchVisitor):
         self._start_clock = time.perf_counter()
 
 
+class NodesCountHaltSearchVisitor(StatsSearchVisitor):
+    _node_limit: int
+    _stats: NodesCountHaltSearchVisitor
+
+    def __init__(self, nodes_limit: int, parent: Optional[NodesCountHaltSearchVisitor] = None):
+        super().__init__(parent=parent)
+        self._nodes_limit = nodes_limit
+
+    def _create_child(self) -> NodesCountHaltSearchVisitor:
+        return NodesCountHaltSearchVisitor(self._nodes_limit, parent=self)
+
+    @property
+    def halt(self):
+        if self.parent:
+            return self.parent.halt
+
+        return self.nodes >= self._nodes_limit
+
+
 class BagOfSearchVisitors(SearchVisitor):
     _visitors: Dict[str, SearchVisitor]
     _child: BagOfSearchVisitors
