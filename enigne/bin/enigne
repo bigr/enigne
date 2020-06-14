@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+import sys
+
+from enigne.engine import Engine
+from enigne.uci_interpreter import UciInterpreter
+
+
+def main():
+    engine = Engine()
+    uci_interpreter = UciInterpreter(engine)
+    uci_interpreter.run(sys.stdin, sys.stdout)
+
+
+if __name__ == "__main__":
+    main()
+
