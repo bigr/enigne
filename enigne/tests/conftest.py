@@ -370,6 +370,13 @@ def basic_fens():
     ]
 
 
+def capture_fens():
+    return [
+        ('8/3PK3/8/8/4N3/P2qk3/8/8 b - - 0 1', {'d3a3', 'e3e4', 'd3d7', 'd3e4'}),
+        ('8/3PK3/8/8/4N3/P2qk3/8/8 w - - 0 1', set())
+    ]
+
+
 def perfts():
     return [
         ('8/8/3k1K2/8/8/8/8/8 w - - 0 1', [5, 36, 257, 1920], 3, None),

@@ -1,9 +1,9 @@
 import pytest
 
 from enigne.board import Board, Square
-from enigne.move_gen import move_gen, attackers, is_attacked
+from enigne.move_gen import capture_move_gen, move_gen, attackers, is_attacked
 from enigne.perft import perft
-from tests.conftest import perfts, basic_fens
+from tests.conftest import perfts, basic_fens, capture_fens
 
 
 @pytest.mark.parametrize("basic_fen", [f for f in basic_fens() if f[2] is not None])
@@ -11,6 +11,16 @@ def test_move_gen(basic_fen):
     fen, _, moves_ref, *_ = basic_fen
     board = Board(fen)
     moves = list(move_gen(board))
+    assert len(moves) == len(set(moves)), (board.fen(), ",".join(str(move) for move in moves))
+    moves = set(str(move) for move in moves)
+    assert moves == moves_ref
+
+
+@pytest.mark.parametrize("capture_fen", capture_fens())
+def test_capture_move_gen(capture_fen):
+    fen, moves_ref = capture_fen
+    board = Board(fen)
+    moves = list(capture_move_gen(board))
     assert len(moves) == len(set(moves)), (board.fen(), ",".join(str(move) for move in moves))
     moves = set(str(move) for move in moves)
     assert moves == moves_ref

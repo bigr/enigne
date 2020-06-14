@@ -143,3 +143,9 @@ def legal_move_gen(board: Board) -> Iterable[Move]:
                         break
         if legal:
             yield move
+
+
+def capture_move_gen(board: Board) -> Iterable[Move]:
+    for move in legal_move_gen(board):
+        if board.opponent_pieces(move.end):
+            yield move
