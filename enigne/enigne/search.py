@@ -20,10 +20,8 @@ class SearchVisitor:
     _init_args: Tuple[Any]
     _halt: bool
 
-    def __init__(self, *args, parent: Optional[SearchVisitor] = None, **kwargs):
+    def __init__(self, parent: Optional[SearchVisitor] = None):
         self._parent = parent
-        self._init_kwargs = kwargs
-        self._init_args = args
         self._child = None
 
     @property
@@ -32,11 +30,14 @@ class SearchVisitor:
 
     @contextmanager
     def child(self) -> Iterator[SearchVisitor]:
-        self._child = self.__class__(*self._init_args, parent=self, **self._init_kwargs)
+        self._child = self._create_child()
         try:
             yield self._child
         finally:
             pass
+
+    def _create_child(self) -> SearchVisitor:
+        return SearchVisitor(parent=self)
 
     @property
     def halt(self):
@@ -88,7 +89,7 @@ class FilterMovesSearchVisitor(SearchVisitor):
     _moves: Container[Move]
 
     def __init__(self, moves: Container[Move], parent: Optional[SearchVisitor] = None):
-        super().__init__(moves, parent=parent)
+        super().__init__(parent=parent)
         self._moves = moves
 
     def skip(self, move: Move) -> bool:
@@ -104,12 +105,16 @@ class PVSearchVisitor(SearchVisitor):
     _current_move: Optional[Move]
     _best_move: Optional[Move]
     _pv: List[Move]
+    _child: PVSearchVisitor
 
-    def __init__(self, parent: Optional[SearchVisitor] = None):
+    def __init__(self, parent: Optional[PVSearchVisitor] = None):
         super().__init__(parent=parent)
         self._current_move = None
         self._best_move = None
         self._pv = []
+
+    def _create_child(self) -> PVSearchVisitor:
+        return PVSearchVisitor(parent=self)
 
     @property
     def best_move(self) -> Optional[Move]:
@@ -134,13 +139,17 @@ class StatsSearchVisitor(SearchVisitor):
     _nodes: int
     _start_clock: Optional[float]
     _end_clock: Optional[float]
+    _child: StatsSearchVisitor
 
-    def __init__(self, parent: Optional[SearchVisitor] = None):
+    def __init__(self, parent: Optional[StatsSearchVisitor] = None):
         super().__init__(parent=parent)
         self._nodes = 0
         self._start_clock = None
         self._end_clock = None
         self._pv = []
+
+    def _create_child(self) -> StatsSearchVisitor:
+        return StatsSearchVisitor(parent=self)
 
     @property
     def nodes(self):
@@ -171,20 +180,64 @@ class StatsSearchVisitor(SearchVisitor):
         self._end_clock = time.perf_counter()
 
 
+class TimeoutHaltSearchVisitor(SearchVisitor):
+    _timeout: float
+    _child: TimeoutHaltSearchVisitor
+
+    def __init__(self, timeout: float, parent: Optional[TimeoutHaltSearchVisitor] = None):
+        super().__init__(parent=parent)
+        self._timeout = timeout
+        self._start_clock = None
+
+    def _create_child(self) -> TimeoutHaltSearchVisitor:
+        return TimeoutHaltSearchVisitor(self._timeout, parent=self)
+
+    @property
+    def halt(self):
+        if self.parent:
+            return self.parent.halt
+
+        return time.perf_counter() - self._start_clock > self._timeout
+
+    def start(self):
+        self._start_clock = time.perf_counter()
+
+
+class NodesCountHaltSearchVisitor(StatsSearchVisitor):
+    _node_limit: int
+    _stats: NodesCountHaltSearchVisitor
+
+    def __init__(self, nodes_limit: int, parent: Optional[NodesCountHaltSearchVisitor] = None):
+        super().__init__(parent=parent)
+        self._nodes_limit = nodes_limit
+
+    def _create_child(self) -> NodesCountHaltSearchVisitor:
+        return NodesCountHaltSearchVisitor(self._nodes_limit, parent=self)
+
+    @property
+    def halt(self):
+        if self.parent:
+            return self.parent.halt
+
+        return self.nodes >= self._nodes_limit
+
+
 class BagOfSearchVisitors(SearchVisitor):
     _visitors: Dict[str, SearchVisitor]
+    _child: BagOfSearchVisitors
 
-    def __init__(self, visitors: Dict[str, SearchVisitor], parent: Optional[str, SearchVisitor] = None, **kwargs):
-        super().__init__(visitors, parent=parent, **kwargs)
+    def __init__(self, visitors: Dict[str, SearchVisitor], parent: Optional[BagOfSearchVisitors] = None):
+
+        super().__init__(parent=parent)
         if parent is None:
             self._visitors = visitors
         else:
-            self._visitors = {
-                name: visitor.__class__(*visitor._init_args, parent=visitor, **visitor._init_kwargs)
-                for name, visitor in visitors.items()
-            }
+            self._visitors = {name: visitor._create_child() for name, visitor in visitors.items()}
             for name, visitor in visitors.items():
                 visitor._child = self._visitors[name]
+
+    def _create_child(self) -> BagOfSearchVisitors:
+        return BagOfSearchVisitors(self._visitors, parent=self)
 
     @property
     def visitors(self) -> Dict[str, SearchVisitor]:

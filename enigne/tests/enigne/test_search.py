@@ -1,28 +1,12 @@
+from __future__ import annotations
+
 import time
-from typing import Optional
 
 import pytest
 
 from enigne.board import Board, Move
 from enigne.search import alphabeta_search, MATE_SCORE, SearchVisitor, PVSearchVisitor, StatsSearchVisitor, \
-    BagOfSearchVisitors, FilterMovesSearchVisitor
-
-
-class HaltVisitor(SearchVisitor):
-
-    def __init__(self, parent: Optional[SearchVisitor] = None):
-        super().__init__(parent=parent)
-        self._start_clock = None
-
-    @property
-    def halt(self):
-        if self.parent:
-            return self.parent.halt
-
-        return time.perf_counter() - self._start_clock > 0.1
-
-    def start(self):
-        self._start_clock = time.perf_counter()
+    BagOfSearchVisitors, FilterMovesSearchVisitor, NodesCountHaltSearchVisitor, TimeoutHaltSearchVisitor
 
 
 def test_search_visitor():
@@ -70,10 +54,9 @@ def test_stats_search_visitor():
 
 
 def test_bag_of_search_visitors():
-    visitor = BagOfSearchVisitors({
-        'pv': PVSearchVisitor(),
-        'stats': StatsSearchVisitor()
-    })
+    pv = PVSearchVisitor()
+    stats = StatsSearchVisitor()
+    visitor = BagOfSearchVisitors({'pv': pv, 'stats': stats})
     with visitor:
         visitor.current_move(Move.from_str('e2e3'))
         time.sleep(0.005)
@@ -90,15 +73,15 @@ def test_bag_of_search_visitors():
         time.sleep(0.005)
         visitor.current_move(Move.from_str('f2f4'))
     time.sleep(0.01)
-    assert str(visitor.visitors['pv'].best_move) == 'e2e4'
-    assert " ".join([str(mv) for mv in visitor.visitors['pv'].pv]) == 'e2e4 e7e6'
-    assert 0.015 <= visitor.visitors['stats'].duration < 0.0175
-    assert visitor.visitors['stats'].nodes == 6
+    assert str(pv.best_move) == 'e2e4'
+    assert " ".join([str(mv) for mv in pv.pv]) == 'e2e4 e7e6'
+    assert 0.015 <= stats.duration < 0.0175
+    assert stats.nodes == 6
 
 
 def test_halt_visitor():
     visitor = BagOfSearchVisitors({
-        'halt': HaltVisitor(),
+        'halt': TimeoutHaltSearchVisitor(timeout=0.1),
         'stats': StatsSearchVisitor()
     })
     with visitor:
@@ -115,6 +98,23 @@ def test_halt_visitor():
                 assert not child_visitor.halt
                 child_visitor.current_move(Move.from_str('e7e6'))
                 time.sleep(0.03)
+                assert child_visitor.halt
+            assert visitor.halt
+
+
+def test_nodes_count_halt_visitor():
+    visitor = NodesCountHaltSearchVisitor(nodes_limit=4)
+    with visitor:
+        assert not visitor.halt
+        visitor.current_move(Move.from_str('e2e3'))
+        visitor.current_move(Move.from_str('e2e4'))
+        assert not visitor.halt
+        with visitor.child() as child_visitor:
+            with child_visitor:
+                assert not child_visitor.halt
+                child_visitor.current_move(Move.from_str('e7e5'))
+                assert not child_visitor.halt
+                child_visitor.current_move(Move.from_str('e7e6'))
                 assert child_visitor.halt
             assert visitor.halt
 
@@ -170,7 +170,7 @@ def test_pv_search_visitor_in_alphabeta_search(fen, depth, expected_score, pvs):
 def test_halt_search_visitor_in_alphabeta_search():
     board = Board('7k/4Q3/8/6K1/8/8/8/8 w - - 0 1')
     visitor = BagOfSearchVisitors({
-        'halt': HaltVisitor(),
+        'halt': TimeoutHaltSearchVisitor(timeout=0.1),
         'stats': StatsSearchVisitor()
     })
     start = time.perf_counter()
@@ -183,11 +183,9 @@ def test_halt_search_visitor_in_alphabeta_search():
 @pytest.mark.parametrize('move', ['h2h3', 'b2b4'])
 def test_filter_moves_search_visitor_in_alphabeta_search(move, initial_position_fen):
     board = Board(initial_position_fen)
-    visitor = BagOfSearchVisitors({
-        'halt': FilterMovesSearchVisitor([Move.from_str(move)]),
-        'pv': PVSearchVisitor()
-    })
+    halt = FilterMovesSearchVisitor([Move.from_str(move)])
+    pv = PVSearchVisitor()
+    visitor = BagOfSearchVisitors({'halt': halt, 'pv': pv})
     alphabeta_search(board, 2, visitor=visitor)
 
-    assert str(visitor.visitors['pv'].best_move) == move
-
+    assert str(pv.best_move) == move
