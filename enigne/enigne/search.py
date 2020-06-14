@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 from enigne.board import Board, Move
 from enigne.eval import evaluate_material
-from enigne.move_gen import legal_move_gen, in_check
+from enigne.move_gen import legal_move_gen, in_check, capture_move_gen
 
 MATE_SCORE = 32767
 
@@ -275,13 +275,43 @@ class BagOfSearchVisitors(SearchVisitor):
         return any(visitor.skip(move) for visitor in self.visitors.values())
 
 
+def quiescence_search(board: Board, alpha: float = -math.inf,
+                      beta: float = math.inf, visitor: SearchVisitor = SearchVisitor()) -> float:
+
+    """Negamax implementation of alpha-beta pruning."""
+    with visitor:
+        no_moves = True
+        for move in capture_move_gen(board):
+            if visitor.skip(move):
+                continue
+
+            visitor.current_move(move)
+
+            no_moves = False
+            with board.do_move(move), visitor.child() as child_visitor:
+                score = quiescence_search(board, -beta, -alpha, child_visitor)
+            score *= -1
+            if score >= beta and score != math.inf:
+                visitor.new_best_move(score)
+                return beta
+            if score > alpha:
+                visitor.new_best_move(score, is_principal_variation=True)
+                alpha = score
+            if visitor.halt:
+                return score
+
+        if no_moves:
+            return evaluate_material(board)
+
+        return alpha
+
+
 def alphabeta_search(board: Board, depth: int, alpha: float = -math.inf,
                      beta: float = math.inf, visitor: SearchVisitor = SearchVisitor()) -> float:
     """Negamax implementation of alpha-beta pruning."""
+    if depth == 0:
+        return quiescence_search(board, alpha, beta, visitor)
     with visitor:
-        if depth == 0:
-            return evaluate_material(board)
-
         mate = True
         for move in legal_move_gen(board):
             if visitor.skip(move):

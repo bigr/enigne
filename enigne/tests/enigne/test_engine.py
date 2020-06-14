@@ -47,14 +47,14 @@ def test_search_non_blocking(engine, initial_position_fen):
 
 def test_search_termination(engine, initial_position_fen):
     engine.modify_position(initial_position_fen)
-    engine.search(depth=4, blocking=False)
+    engine.search(depth=3, blocking=False)
     assert not engine.is_search_terminating
     start = time.perf_counter()
     engine.terminate_search()
     assert engine.is_search_terminating
     while not engine.search_done:
         time.sleep(0.001)
-    assert time.perf_counter() - start < 0.003
+    assert time.perf_counter() - start < 0.01
 
     board = Board(initial_position_fen)
     assert engine.search_done in set(legal_move_gen(board))
@@ -63,8 +63,8 @@ def test_search_termination(engine, initial_position_fen):
 def test_search_timeout(engine, initial_position_fen):
     engine.modify_position(initial_position_fen)
     start = time.perf_counter()
-    move = engine.search(depth=4, timeout=0.1)
-    assert 0.1 <= time.perf_counter() - start < 0.105
+    move = engine.search(depth=3, timeout=0.1)
+    assert 0.1 <= time.perf_counter() - start < 0.15
     board = Board(initial_position_fen)
     assert move in set(legal_move_gen(board))
 
@@ -75,9 +75,9 @@ def test_search_nodes(initial_position_fen):
     engine.set_search_visitor(visitor)
     engine.modify_position(initial_position_fen)
     start = time.perf_counter()
-    move = engine.search(depth=4, nodes=100)
+    move = engine.search(depth=3, nodes=100)
     assert visitor.nodes == 100
-    assert time.perf_counter() - start < 0.1
+    assert time.perf_counter() - start < 0.75
     board = Board(initial_position_fen)
     assert move in set(legal_move_gen(board))
 
